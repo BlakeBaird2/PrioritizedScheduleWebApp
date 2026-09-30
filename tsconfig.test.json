@@ -1,0 +1,17 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "module": "commonjs",
+    "moduleResolution": "node10",
+    "noEmit": false,
+    "noEmitOnError": true,
+    "outDir": ".test-build",
+    "rootDir": "src",
+    "jsx": "react-jsx",
+    "incremental": false,
+    "types": ["node"],
+    "plugins": []
+  },
+  "include": ["src/lib/**/*.ts"],
+  "exclude": ["node_modules"]
+}

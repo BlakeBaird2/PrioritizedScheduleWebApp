@@ -1,0 +1,235 @@
+/*
+ * Shared types.
+ *
+ * Everything the app knows comes from calendar feeds (iCal links) the user pastes
+ * in. The server turns a feed into a FeedResult and stores nothing. The browser
+ * keeps the user's Workspace and the last Snapshot of each feed, and merges them
+ * into Courses, Tasks and CalEvents for display and planning.
+ */
+
+export type AssignmentType = "exam" | "quiz" | "reading" | "project" | "assignment";
+
+export const ASSIGNMENT_TYPES: AssignmentType[] = ["exam", "quiz", "project", "assignment", "reading"];
+
+const KNOWN_TYPES = new Set<string>(ASSIGNMENT_TYPES);
+
+/** Coerce a stored type to one that exists, so old or odd data never breaks the page. */
+export function normalizeType(type: unknown): AssignmentType {
+  return typeof type === "string" && KNOWN_TYPES.has(type) ? (type as AssignmentType) : "assignment";
+}
+
+/** Where a feed comes from. Only used for sensible defaults and help text. */
+export type Provider = "canvas" | "learningsuite" | "google" | "outlook" | "icloud" | "other";
+
+/**
+ * What a feed is for.
+ * - school: its entries become assignments and class meetings.
+ * - personal: its entries only mark time as busy; nothing becomes homework.
+ */
+export type FeedRole = "school" | "personal";
+
+// ---------------------------------------------------------------------------
+// What the server returns for one feed
+// ---------------------------------------------------------------------------
+
+/** A class found inside a feed. `key` is unique within that feed. */
+export interface FeedCourse {
+  key: string;
+  code: string;
+  title: string;
+  url: string | null;
+}
+
+/** Something that is due. */
+export interface FeedTask {
+  uid: string;
+  courseKey: string | null;
+  title: string;
+  type: AssignmentType;
+  dueAt: string; // ISO instant
+  allDay: boolean;
+  url: string | null;
+  description: string | null;
+  /** Created by the app rather than read from the feed, e.g. study time before an exam. */
+  generated?: "study";
+}
+
+export type EventKind = "class" | "exam" | "event";
+
+/** Something that occupies time on the calendar. */
+export interface FeedEvent {
+  uid: string;
+  courseKey: string | null;
+  title: string;
+  start: string; // ISO instant
+  end: string; // ISO instant, exclusive
+  allDay: boolean;
+  /** Whether this blocks the planner from scheduling work. */
+  busy: boolean;
+  kind: EventKind;
+  location: string | null;
+  url: string | null;
+}
+
+export interface FeedResult {
+  url: string;
+  provider: Provider;
+  role: FeedRole;
+  calendarName: string | null;
+  fetchedAt: string;
+  courses: FeedCourse[];
+  tasks: FeedTask[];
+  events: FeedEvent[];
+  /** Entries that could not be read and were left out. */
+  skipped: number;
+}
+
+// ---------------------------------------------------------------------------
+// What the browser keeps
+// ---------------------------------------------------------------------------
+
+export interface FeedConfig {
+  /** Derived from the URL, so the same link always gets the same id on every device. */
+  id: string;
+  url: string;
+  name: string;
+  role: FeedRole;
+  provider: Provider;
+  /** Colour for events from personal calendars. Classes get their own colours. */
+  color: string;
+  enabled: boolean;
+}
+
+/** A recurring busy block the feeds do not cover, such as class times or a work shift. */
+export interface WeeklyBlock {
+  id: string;
+  label: string;
+  /** 0 = Sunday ... 6 = Saturday */
+  days: number[];
+  start: string; // "HH:MM"
+  end: string; // "HH:MM"
+}
+
+/** Work the user added by hand, for things no feed knows about. */
+export interface ManualTask {
+  id: string;
+  title: string;
+  courseId: string | null;
+  type: AssignmentType;
+  dueAt: string | null;
+}
+
+export interface CourseEdit {
+  code?: string;
+  title?: string;
+  color?: string;
+  hidden?: boolean;
+}
+
+export interface PlanPrefs {
+  /** Minutes after midnight when the working day starts and ends. */
+  dayStart: number;
+  dayEnd: number;
+  /** Most minutes of work to plan in one day, unless something is due within a day. */
+  dailyMax: number;
+  /** Minutes kept free before and after each event, for travel and breathing room. */
+  buffer: number;
+  /** Shortest free stretch worth using. */
+  minGap: number;
+  /** Whether to plan work on Saturdays and Sundays. */
+  weekends: boolean;
+  /** Default time needed for each kind of work, in minutes. */
+  estimates: Record<AssignmentType, number>;
+}
+
+export interface Workspace {
+  version: 1;
+  feeds: FeedConfig[];
+  weekly: WeeklyBlock[];
+  manualTasks: ManualTask[];
+  /** taskId -> when it was marked done */
+  done: Record<string, string>;
+  /** taskId -> minutes the user says it needs */
+  estimates: Record<string, number>;
+  /** courseId -> the user's renames, colours and hiding */
+  courseEdits: Record<string, CourseEdit>;
+  prefs: PlanPrefs;
+  /** Showing sample data instead of the user's own calendars. */
+  demo: boolean;
+}
+
+export interface FeedState {
+  result: FeedResult | null;
+  error: string | null;
+  /** When the feed was last read successfully. */
+  syncedAt: string | null;
+}
+
+export interface Snapshot {
+  feeds: Record<string, FeedState>;
+  /** When the last sync attempt finished. */
+  at: string | null;
+}
+
+export type ChangeKind = "added" | "removed" | "due_changed";
+
+export interface Change {
+  id: string;
+  at: string;
+  kind: ChangeKind;
+  taskId: string;
+  courseId: string | null;
+  title: string;
+  from: string | null;
+  to: string | null;
+}
+
+// ---------------------------------------------------------------------------
+// The merged view the interface and planner work from
+// ---------------------------------------------------------------------------
+
+export interface Course {
+  /** `${feedId}:${key}` */
+  id: string;
+  feedId: string;
+  code: string;
+  title: string;
+  color: string;
+  url: string | null;
+  hidden: boolean;
+}
+
+export interface Task {
+  id: string;
+  feedId: string | null;
+  courseId: string | null;
+  title: string;
+  type: AssignmentType;
+  dueAt: string | null;
+  allDay: boolean;
+  url: string | null;
+  description: string | null;
+  /** Minutes this is expected to take. */
+  estimate: number;
+  /** Whether the user set the estimate, rather than it coming from the default for its type. */
+  customEstimate: boolean;
+  done: boolean;
+  manual: boolean;
+  generated: "study" | null;
+}
+
+export interface CalEvent {
+  id: string;
+  feedId: string | null;
+  courseId: string | null;
+  title: string;
+  start: string;
+  end: string;
+  allDay: boolean;
+  busy: boolean;
+  kind: EventKind;
+  location: string | null;
+  url: string | null;
+  color: string;
+  source: "feed" | "weekly";
+}
