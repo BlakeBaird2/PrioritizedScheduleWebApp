@@ -1,15 +1,17 @@
 "use client";
 
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { differenceInCalendarDays, format } from "date-fns";
-import { ArrowRight, CircleAlert, Clock3, ExternalLink, MapPin, Trash, X } from "lucide-react";
+import { ArrowRight, CircleAlert, Clock3, ExternalLink, MapPin, Pencil, Trash, X } from "lucide-react";
 import { PROVIDER_LABEL } from "@/lib/feeds/url";
 import { parseWeeklyId } from "@/lib/model";
+import { daysLabel, meetingKey, meetingPatterns } from "@/lib/meetings";
 import type { CalEvent, Task } from "@/lib/types";
 import { clockRange, dueDate, duration, relativeDue, typeMeta } from "@/lib/ui";
 import { courseStyle, useApp, type Selection } from "./context";
 import { DoneToggle } from "./TaskRow";
 import { TypeChip } from "./TypeChip";
+import { ClassTimeForm, useClassTimeActions, valuesFromBlock, valuesFromPattern } from "./ClassTimes";
 
 export function DetailPanel({ selection, onClose }: { selection: NonNullable<Selection>; onClose: () => void }) {
   const { model } = useApp();
@@ -224,12 +226,23 @@ function TaskDetail({ task, onClose }: { task: Task; onClose: () => void }) {
 }
 
 function EventDetail({ event, onClose }: { event: CalEvent; onClose: () => void }) {
-  const { model, setView, update, openClassTimes } = useApp();
+  const { model, ws, now, setView, update, openClassTimes } = useApp();
   const course = event.courseId ? model.courseById.get(event.courseId) : undefined;
   const feed = event.feedId ? model.feedById.get(event.feedId) : undefined;
   const start = new Date(event.start);
   const end = new Date(event.end);
   const weekly = parseWeeklyId(event.id);
+  const actions = useClassTimeActions();
+  const [editing, setEditing] = useState(false);
+
+  // A class meeting can be corrected: one entered here directly, one from a class
+  // calendar by standing in for every meeting at that time. One-off events can't.
+  const block = weekly && event.courseId ? ws.weekly.find((b) => b.id === weekly.blockId) : undefined;
+  const pattern =
+    !weekly && event.courseId && event.kind === "class"
+      ? meetingPatterns(model.events, event.courseId, now).find((p) => p.key === meetingKey(start, end) && p.count >= 2)
+      : undefined;
+  const editable = Boolean(block || pattern);
   const kind = event.kind === "class" ? "Class" : event.kind === "exam" ? "Exam" : event.source === "weekly" ? "Every week" : "Event";
 
   const skipDay = () => {
@@ -276,6 +289,32 @@ function EventDetail({ event, onClose }: { event: CalEvent; onClose: () => void 
         <p className="text-sm text-muted">
           {event.busy ? "Prio plans your work around this." : "This doesn't block your time, so Prio can plan work during it."}
         </p>
+        {editable ? (
+          editing ? (
+            <div>
+              <Label>Class time</Label>
+              <ClassTimeForm
+                initial={block ? valuesFromBlock(block) : { ...valuesFromPattern(pattern!), location: event.location ?? "" }}
+                note={
+                  pattern
+                    ? `This changes every ${daysLabel(pattern.days)} meeting at this time. ${feed?.name ?? "The calendar"}'s version is hidden; you can switch back in Class times.`
+                    : "This changes every meeting of this class time."
+                }
+                onSave={(v) => {
+                  if (block) actions.replace(block, v);
+                  else if (pattern && event.courseId) actions.correct(event.courseId, pattern.key, v);
+                  onClose();
+                }}
+                onCancel={() => setEditing(false)}
+              />
+            </div>
+          ) : (
+            <button type="button" className="btn-primary w-full" onClick={() => setEditing(true)}>
+              <Pencil size={15} />
+              Change class time
+            </button>
+          )
+        ) : null}
         {weekly ? (
           <div className="space-y-2">
             <button type="button" className="btn w-full justify-center" onClick={skipDay}>
@@ -290,7 +329,7 @@ function EventDetail({ event, onClose }: { event: CalEvent; onClose: () => void 
                 else setView("settings");
               }}
             >
-              {event.courseId ? "Change class times" : "Change weekly busy times"}
+              {event.courseId ? "All class times" : "Change weekly busy times"}
             </button>
           </div>
         ) : null}

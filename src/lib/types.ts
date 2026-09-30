@@ -132,6 +132,12 @@ export interface CourseEdit {
   title?: string;
   color?: string;
   hidden?: boolean;
+  /**
+   * Meeting times from the class's calendar that the user corrected, as
+   * "startMinutes-endMinutes" of the day. Meetings at those times are hidden and
+   * the user's own class times stand in for them.
+   */
+  feedTimesOff?: string[];
 }
 
 export interface PlanPrefs {

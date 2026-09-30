@@ -4,6 +4,7 @@
  */
 import type { CalEvent, Course, FeedConfig, Snapshot, Task, WeeklyBlock, Workspace } from "./types";
 import { normalizeType } from "./types";
+import { meetingKey } from "./meetings";
 
 export const COURSE_COLORS = ["#4f46e5", "#059669", "#d97706", "#e11d48", "#0284c7", "#7c3aed", "#0d9488", "#ea580c", "#2563eb", "#c026d3"];
 export const WEEKLY_COLOR = "#78716c";
@@ -171,6 +172,9 @@ export function buildModel(ws: Workspace, snapshot: Snapshot, now: Date): Model 
     for (const e of result.events) {
       const courseId = courseIdFor(e.courseKey);
       if (courseId && hidden.has(courseId)) continue;
+      // A class meeting time the user corrected gives way to their own class time.
+      const off = courseId ? ws.courseEdits[courseId]?.feedTimesOff : undefined;
+      if (off?.length && e.kind === "class" && !e.allDay && off.includes(meetingKey(new Date(e.start), new Date(e.end)))) continue;
       events.push({
         id: `${feed.id}:${e.uid}`,
         feedId: feed.id,

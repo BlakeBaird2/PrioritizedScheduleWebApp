@@ -280,8 +280,43 @@ test("meetings already on a class calendar are described in plain words", () => 
   const at = (d: number, h: number, m = 0) => new Date(2026, 9, d, h, m).toISOString();
   const ev = (start: string, end: string) => ({ id: start, feedId: "f", courseId: "c", title: "Class", start, end, allDay: false, busy: true, kind: "class" as const, location: null, url: null, color: "#000000", source: "feed" as const });
   const events = [ev(at(5, 9, 30), at(5, 10, 45)), ev(at(7, 9, 30), at(7, 10, 45)), ev(at(12, 9, 30), at(12, 10, 45))];
-  assert.deepEqual(meetingPatterns(events, "c", NOW), [{ days: [1, 3], start: 570, end: 645 }]);
+  assert.deepEqual(meetingPatterns(events, "c", NOW), [{ days: [1, 3], start: 570, end: 645, count: 3, key: "570-645" }]);
   assert.equal(daysLabel([3, 1]), "Mon, Wed");
   assert.equal(daysLabel([0, 2, 4]), "Tue, Thu, Sun");
   assert.equal(daysLabel([1, 2, 3, 4, 5]), "Weekdays");
+});
+
+test("a corrected class time hides the calendar's wrong meetings, and only those", () => {
+  const school = feed("https://school.example/cal.ics");
+  const courseId = `${school.id}:course_1`;
+  const at = (d: number, h: number, m = 0) => new Date(2026, 9, d, h, m).toISOString();
+  const meeting = (uid: string, start: string, end: string) => ({ uid, courseKey: "course_1", title: "NET 460: Network Security", start, end, allDay: false, busy: true, kind: "class" as const, location: null, url: null });
+  const snapshot = {
+    at: null,
+    feeds: {
+      [school.id]: {
+        result: {
+          url: school.url, provider: "canvas" as const, role: "school" as const, calendarName: null, fetchedAt: NOW.toISOString(),
+          courses: [{ key: "course_1", code: "NET 460", title: "NET 460", url: null }],
+          tasks: [],
+          events: [meeting("m1", at(5, 9, 30), at(5, 12, 30)), meeting("m2", at(7, 9, 30), at(7, 12, 30)), meeting("review", at(8, 18), at(8, 19))],
+          skipped: 0,
+        },
+        error: null,
+        syncedAt: null,
+      },
+    },
+  };
+  const ws: Workspace = {
+    ...defaultWorkspace(),
+    feeds: [school],
+    courseEdits: { [courseId]: { feedTimesOff: ["570-750"] } },
+    weekly: [{ id: "fix", label: "Class", courseId, days: [1, 3], start: "09:30", end: "10:45" }],
+  };
+  const m = buildModel(ws, snapshot, NOW);
+  const feedMeetings = m.events.filter((e) => e.source === "feed").map((e) => e.id.split(":").pop());
+  assert.deepEqual(feedMeetings, ["review"], "the 9:30-12:30 meetings are hidden; the one-off review stays");
+  const mine = m.events.find((e) => e.source === "weekly" && e.start === at(5, 9, 30));
+  assert.equal(mine?.end, at(5, 10, 45), "the corrected time stands in");
+  assert.deepEqual(sanitizeWorkspace(ws).courseEdits[courseId].feedTimesOff, ["570-750"], "the correction survives storage");
 });

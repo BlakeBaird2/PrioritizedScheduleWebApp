@@ -22,9 +22,22 @@ export interface MeetingPattern {
   /** Minutes after midnight. */
   start: number;
   end: number;
+  /** How many meetings in the window had this time. One means a one-off, not a pattern. */
+  count: number;
+  key: string;
 }
 
 const minutesOf = (d: Date) => d.getHours() * 60 + d.getMinutes();
+
+/** A meeting's time of day as "startMinutes-endMinutes", the same for every week it repeats. */
+export function meetingKey(start: Date, end: Date): string {
+  return `${minutesOf(start)}-${minutesOf(end) || 24 * 60}`;
+}
+
+export function parseMeetingKey(key: string): { start: number; end: number } {
+  const [start, end] = key.split("-").map(Number);
+  return { start, end };
+}
 
 /**
  * The regular meeting times a class's own calendar already has, found from its
@@ -34,19 +47,19 @@ const minutesOf = (d: Date) => d.getHours() * 60 + d.getMinutes();
 export function meetingPatterns(events: CalEvent[], courseId: string, now: Date): MeetingPattern[] {
   const from = now.getTime() - 21 * DAY;
   const to = now.getTime() + 35 * DAY;
-  const byTime = new Map<string, { start: number; end: number; days: Set<number> }>();
+  const byTime = new Map<string, { start: number; end: number; days: Set<number>; count: number }>();
   for (const e of events) {
     if (e.courseId !== courseId || e.kind !== "class" || e.allDay || e.source !== "feed") continue;
     const s = new Date(e.start);
     if (s.getTime() < from || s.getTime() > to) continue;
-    const start = minutesOf(s);
-    const end = minutesOf(new Date(e.end)) || 24 * 60;
-    const key = `${start}-${end}`;
-    const entry = byTime.get(key) ?? { start, end, days: new Set<number>() };
+    const key = meetingKey(s, new Date(e.end));
+    const { start, end } = parseMeetingKey(key);
+    const entry = byTime.get(key) ?? { start, end, days: new Set<number>(), count: 0 };
     entry.days.add(s.getDay());
+    entry.count++;
     byTime.set(key, entry);
   }
-  return [...byTime.values()]
-    .map((p) => ({ days: [...p.days].sort(), start: p.start, end: p.end }))
+  return [...byTime.entries()]
+    .map(([key, p]) => ({ days: [...p.days].sort(), start: p.start, end: p.end, count: p.count, key }))
     .sort((a, b) => a.start - b.start);
 }

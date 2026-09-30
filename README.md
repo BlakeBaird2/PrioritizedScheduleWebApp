@@ -26,7 +26,9 @@ it and start.
   each class's days and times once (during setup, in Settings, or from the
   prompt on the Plan screen) and they show on your calendar in the class's
   colour and block that time in the plan. Classes whose calendar already has
-  meetings say so. Click any meeting to mark a single day off, like a holiday.
+  meetings say so. Click any class on the calendar to change its time (a wrong
+  time from Canvas is replaced by yours, and you can switch back), or to mark a
+  single day off, like a holiday.
 - **Change alerts** — each refresh is compared with the last. When a due date
   moves, or work is added or removed, the bell says so. Click to jump to it.
 - **Your own tasks** — add work no calendar knows about with the + button.
