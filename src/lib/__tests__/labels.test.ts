@@ -26,7 +26,8 @@ test("course codes are found and titles cleaned", () => {
   assert.deepEqual(courseLabels("ECON 110 - Principles of Economics"), { code: "ECON 110", title: "Principles of Economics" });
   assert.deepEqual(courseLabels("Fall 2026 CS 260 001 Web Programming", "CS 260"), { code: "CS 260", title: "Web Programming" });
   assert.deepEqual(courseLabels("CS260-F26", "CS260-F26"), { code: "CS 260", title: "CS 260" });
-  assert.equal(courseLabels("Principles of Economics").code, "Principles of Eco…");
+  assert.equal(courseLabels("Principles of Finance").code, "Principles of Finance", "a short enough name is kept whole");
+  assert.equal(courseLabels("Principles of Managerial Economics").code, "Principles of Manager…");
 });
 
 test("timezones: bad values fall back and dates land on local midnight", () => {

@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { DEFAULT_PREFS, buildPlan } from "../planner";
-import { buildDayTimeline, nowStatus } from "../timeline";
+import { buildDaySchedule, nowStatus } from "../timeline";
 import type { CalEvent, Task } from "../types";
 
 const at = (day: number, h: number, m = 0) => new Date(2026, 9, day, h, m);
@@ -27,15 +27,17 @@ function setup(now: Date) {
   return { events, tasks, plan };
 }
 
-test("a day reads in order: events, planned work, free time and deadlines", () => {
+test("a day reads in order: events, and free stretches holding the work planned in them", () => {
   const { events, tasks, plan } = setup(at(1, 7));
-  const day = buildDayTimeline(at(1, 0), plan.days[0], events, tasks);
+  const day = buildDaySchedule(at(1, 0), plan.days[0], events, tasks);
   assert.deepEqual(day.allDayEvents.map((e) => e.id), ["Birthday"]);
   assert.deepEqual(day.dueAllDay.map((t) => t.id), ["Reading"]);
   assert.deepEqual(
-    day.items.map((i) => `${i.kind}:${hhmm(i.start)}${i.kind === "work" ? ":" + i.task.id : ""}`),
-    ["work:08:00:Quiz", "work:08:30:Reading", "work:09:00:Essay", "event:10:00", "free:11:00", "event:13:00", "free:17:00", "due:18:00"],
+    day.items.map((i) => `${i.kind}:${hhmm(i.start)}${i.kind === "free" ? "[" + i.work.map((w) => w.task.id).join(",") + "]" : ""}`),
+    ["free:08:00[Quiz,Reading,Essay]", "event:10:00", "free:11:00[]", "event:13:00", "free:17:00[]", "due:18:00"],
   );
+  const first = day.items[0];
+  assert.ok(first.kind === "free" && first.minutes === 120 && first.leftover === 0, "8 to 10 is filled by 30 + 30 + 60 minutes");
 });
 
 test("right now: free time says what to do and until when", () => {

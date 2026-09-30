@@ -1,12 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import { CircleAlert, Eye, EyeOff, Link as LinkIcon, Trash } from "lucide-react";
+import { CircleAlert, Eye, EyeOff, Link as LinkIcon, Pencil, Trash } from "lucide-react";
 import { feedIdFor, normalizeFeedUrl, PROVIDER_LABEL } from "@/lib/feeds/url";
 import { fetchFeedFromApi } from "@/lib/sync";
 import type { FeedConfig, FeedResult, FeedRole, Provider } from "@/lib/types";
 import { plural, timeAgo } from "@/lib/ui";
-import { useApp } from "./context";
+import { courseStyle, useApp } from "./context";
 
 /** What a calendar contributed, in a few words. */
 export function feedSummary(result: FeedResult | null | undefined, role: FeedRole): string {
@@ -167,6 +167,7 @@ export function FeedList({ manage = false }: { manage?: boolean }) {
                 <Trash size={15} />
               </button>
             </div>
+            {feed.role === "school" ? <ClassChips feedId={feed.id} /> : null}
             {state?.error ? (
               <p className="mt-1.5 text-xs text-danger flex gap-1.5">
                 <CircleAlert size={13} className="shrink-0 mt-px" />
@@ -180,6 +181,68 @@ export function FeedList({ manage = false }: { manage?: boolean }) {
         );
       })}
     </ul>
+  );
+}
+
+/** The classes a school calendar brought in. Click one to give it a better short name. */
+function ClassChips({ feedId }: { feedId: string }) {
+  const { model, update } = useApp();
+  const [editing, setEditing] = useState<string | null>(null);
+  const [value, setValue] = useState("");
+  const courses = model.courses.filter((c) => c.feedId === feedId);
+  if (courses.length === 0) return null;
+
+  const save = (id: string) => {
+    const code = value.trim().slice(0, 24);
+    if (code) update((w) => ({ ...w, courseEdits: { ...w.courseEdits, [id]: { ...w.courseEdits[id], code } } }));
+    setEditing(null);
+  };
+
+  return (
+    <div className="mt-2 flex flex-wrap items-center gap-1.5 pl-5">
+      {courses.map((c) =>
+        editing === c.id ? (
+          <form
+            key={c.id}
+            onSubmit={(e) => {
+              e.preventDefault();
+              save(c.id);
+            }}
+          >
+            <input
+              autoFocus
+              aria-label={`New short name for ${c.title}`}
+              className="input input-sm !w-32 !py-0.5"
+              value={value}
+              maxLength={24}
+              onChange={(e) => setValue(e.target.value)}
+              onBlur={() => save(c.id)}
+              onKeyDown={(e) => {
+                if (e.key === "Escape") setEditing(null);
+              }}
+            />
+          </form>
+        ) : (
+          <button
+            key={c.id}
+            type="button"
+            className="pill pill-course"
+            aria-pressed={true}
+            style={courseStyle(c.color)}
+            title={c.title === c.code ? "Click to rename" : `${c.title} · click to rename`}
+            onClick={() => {
+              setEditing(c.id);
+              setValue(c.code);
+            }}
+          >
+            <span className="course-dot" />
+            <span className="course-text">{c.code}</span>
+            <Pencil size={11} className="text-faint" />
+          </button>
+        ),
+      )}
+      <span className="text-[11px] text-faint">Tap a class to rename it.</span>
+    </div>
   );
 }
 
@@ -206,9 +269,12 @@ const HELP: { id: Provider; label: string; steps: React.ReactNode[]; note?: stri
     steps: [
       "Open the course in Learning Suite and go to its Schedule.",
       "Find the calendar (iCal) subscription link and copy it.",
-      "Each Learning Suite course has its own link, so add one per class.",
+      <>
+        It looks like <span className="font-mono text-[0.8em] break-all">learningsuite.byu.edu/iCalFeed/ical.php?courseID=…</span> Each course has its own
+        link, so add one per class.
+      </>,
     ],
-    note: "A course calendar becomes one class, named from the calendar. You can rename it in Classes.",
+    note: "Each course calendar becomes one class. If it shows up without its course code, click it below to rename it (for example to FIN 201).",
   },
   {
     id: "google",
@@ -220,7 +286,7 @@ const HELP: { id: Provider; label: string; steps: React.ReactNode[]; note?: stri
         In <b>Integrate calendar</b>, copy the <b>Secret address in iCal format</b>.
       </>,
     ],
-    note: "School and work Google accounts sometimes have this turned off by an administrator. Changes show up within minutes.",
+    note: "Use the secret address, not the “public address”: the public one only works for calendars shared with everyone. School and work Google accounts sometimes have this turned off by an administrator.",
   },
   {
     id: "outlook",

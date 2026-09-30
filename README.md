@@ -12,9 +12,11 @@ it and start.
 
 ## What it does
 
-- **Plan** — the main screen. What to do right now ("1h 20m free until 4 PM:
-  do Problem Set 4, then Reading 5"), the rest of today in order, the next two
-  weeks day by day, and a warning for anything that won't fit before it's due.
+- **Plan** — the home screen, built to answer three questions at a glance:
+  *what should I work on right now* (one task, with a Done button), *what does
+  the rest of my day look like* (your events, and each stretch of free time
+  with the work planned into it), and *what's due this week* (each item says
+  when it's planned, or that it won't fit in time).
 - **Calendar** — month, week and day. Week and day are time grids showing your
   classes, your personal events and your planned work side by side.
 - **Upcoming** — everything due, by day, with where it sits in the plan.
@@ -37,7 +39,7 @@ Two steps, kept simple on purpose so you can always tell why it says what it say
    too long for a short gap, the next thing that fits goes there instead, so
    short gaps still get used. Longer work is split across gaps in pieces of at
    least 25 minutes; quizzes are never split. Nothing is scheduled after its
-   own due time, and there's a daily limit (6 hours by default) that only work
+   own due time, and there's a daily limit (4 hours by default) that only work
    due within a day can go past.
 
 Every kind of work has a starting estimate (reading 30m, assignment 1h,
@@ -70,6 +72,12 @@ Prio picks one when you add a link and you can switch it at any time.
 you open it, when you come back to the tab, and every 30 minutes while it's open.
 Google and Apple reflect changes within minutes; Outlook can take a few hours to
 republish.
+
+**If a link won't add,** the message says why and what to copy instead. The
+common one: Google's "public address" only works for calendars shared with
+everyone, so use the "Secret address in iCal format". Canvas can also label a
+class with an unhelpful code like "All Sections"; Prio looks for the real code in
+section names, and you can tap any class under its calendar to rename it.
 
 **What a calendar link can't tell Prio.** Feeds say when work is due, not whether
 you handed it in. When you first add a school calendar, anything already past due
@@ -113,8 +121,10 @@ npm run lint
 No configuration is needed. Pick **Try sample data** on the first screen to see
 it working without any calendars.
 
-For local testing against calendar files served from your own machine, start the
-server with `FEED_ALLOW_PRIVATE_HOSTS=1`. Never set this on a public deployment.
+`npm run dev` accepts links whose site resolves to a private network address
+(common on campus Wi-Fi and VPNs). A production build refuses them unless started
+with `FEED_ALLOW_PRIVATE_HOSTS=1`, which is only for testing on your own machine.
+Never set it on a public deployment.
 
 ## Deploy it (free)
 

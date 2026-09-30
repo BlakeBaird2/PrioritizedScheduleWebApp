@@ -3,7 +3,7 @@ import test from "node:test";
 import { parseFeed } from "../feeds/parse";
 import { detectProvider, feedIdFor, normalizeFeedUrl } from "../feeds/url";
 import { DEMO_FEEDS, demoFeedText } from "../feeds/demo";
-import { FeedFetchError, assertPublicUrl, fetchFeedText, isPrivateAddress } from "../server/fetchFeed";
+import { FeedFetchError, assertPublicUrl, explainProblem, fetchFeedText, isPrivateAddress } from "../server/fetchFeed";
 
 const TZ = "America/Denver";
 const NOW = new Date("2026-10-01T18:00:00Z"); // Thursday, noon in Denver
@@ -342,4 +342,60 @@ test("a calendar named for a course is school even when it only has meetings", (
 
 test("a personal calendar from an unknown site stays personal", () => {
   assert.equal(parseFeed(personalFeed, { url: "https://cal.example.net/me.ics", role: "auto", timezone: TZ, now: NOW }).role, "personal");
+});
+
+test("canvas: a section's due date is work, and its section name names an 'All Sections' class", () => {
+  const feed = cal("Student", [
+    ev([
+      "UID:event-assignment-700",
+      "DTSTART:20261003T055900Z",
+      "DTEND:20261003T055900Z",
+      "SUMMARY:Kali Linux Setup [All Sections]",
+      "URL:https://byu.instructure.com/calendar?include_contexts=course_3707#assignment_700",
+    ]),
+    ev([
+      "UID:event-assignment-override-2358",
+      "DTSTART:20261009T140500Z",
+      "DTEND:20261009T140500Z",
+      "SUMMARY:Diceware (in-class activity) (NET 460-001: Network Security) [All Sections]",
+      "URL:https://byu.instructure.com/calendar?include_contexts=course_3707#assignment_701",
+    ]),
+  ]);
+  const r = parseFeed(feed, { url: CANVAS_URL, role: "auto", timezone: TZ, now: NOW });
+  assert.deepEqual(
+    r.courses.map((c) => [c.code, c.title]),
+    [["NET 460", "Network Security"]],
+  );
+  const override = r.tasks.find((t) => t.title === "Diceware (in-class activity)");
+  assert.ok(override, "the section's due date became a task, without the section name in its title");
+  assert.equal(override!.uid, "event-assignment-701");
+  assert.equal(override!.url, "https://byu.instructure.com/courses/3707/assignments/701");
+  assert.equal(r.events.length, 0);
+});
+
+test("canvas: without a section name, an 'All Sections' class keeps the label Canvas gave it", () => {
+  const feed = cal("Student", [
+    ev([
+      "UID:event-assignment-700",
+      "DTSTART:20261003T055900Z",
+      "DTEND:20261003T055900Z",
+      "SUMMARY:Kali Linux Setup [All Sections]",
+      "URL:https://byu.instructure.com/calendar?include_contexts=course_3707#assignment_700",
+    ]),
+  ]);
+  const r = parseFeed(feed, { url: CANVAS_URL, role: "auto", timezone: TZ, now: NOW });
+  assert.equal(r.courses.length, 1);
+  assert.equal(r.courses[0].code, "All Sections");
+});
+
+test("a failed link says what to do for the service it came from", async () => {
+  const lookup = async () => [{ address: "93.184.216.34" }];
+  const notFound = (async () => new Response("Not Found", { status: 404 })) as unknown as typeof fetch;
+  await assert.rejects(
+    fetchFeedText("https://calendar.google.com/calendar/ical/me%40gmail.com/public/basic.ics", { lookup, fetchImpl: notFound }),
+    /Secret address in iCal format/,
+  );
+  assert.match(explainProblem(new URL("https://learningsuite.byu.edu/student/schedule"), "webpage"), /iCalFeed\/ical\.php/);
+  assert.match(explainProblem(new URL("https://byu.instructure.com/calendar"), "webpage"), /Calendar Feed/);
+  assert.match(explainProblem(new URL("https://example.org/cal.ics"), "missing"), /Copy a fresh link/);
 });

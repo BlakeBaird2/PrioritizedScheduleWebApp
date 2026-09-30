@@ -202,6 +202,8 @@ export function parseFeed(text: string, options: ParseOptions): FeedResult {
   const role: FeedRole = options.role === "auto" ? (defaultRole(provider) ?? guessRole(occurrences, calendarName)) : options.role;
 
   const courses = new Map<string, FeedCourse>();
+  /** Canvas: a section name seen for each course, e.g. "NET 460-001: Network Security". */
+  const sectionNames = new Map<string, string>();
   const tasks: FeedTask[] = [];
   const events: FeedEvent[] = [];
   const seen = new Set<string>();
@@ -303,9 +305,23 @@ export function parseFeed(text: string, options: ParseOptions): FeedResult {
       }
 
       if (provider === "canvas") {
-        const { title, code } = splitCanvasSummary(o.title);
+        const split = splitCanvasSummary(o.title);
+        let title = split.title;
+        const code = split.code;
         const ctx = canvasContext(o.url);
         const courseKey = ctx?.courseId ? `course_${ctx.courseId}` : null;
+
+        // A due date set for one section has its own UID and ends with the
+        // section's name, e.g. "Lab 3 (NET 460-001: Network Security)". That
+        // name is often the only place the real course code appears.
+        const override = o.baseUid.startsWith("event-assignment-override-");
+        if (override) {
+          const section = title.match(/^(.*\S)\s*\(([^()]+)\)\s*$/);
+          if (section && findCourseCode(section[2])) {
+            title = section[1];
+            if (courseKey && !sectionNames.has(courseKey)) sectionNames.set(courseKey, section[2].trim());
+          }
+        }
         if (courseKey && !courses.has(courseKey)) {
           const labels = courseLabels(code ?? `Course ${ctx!.courseId}`, code);
           courses.set(courseKey, {
@@ -316,15 +332,16 @@ export function parseFeed(text: string, options: ParseOptions): FeedResult {
           });
         }
 
-        const assignment = o.baseUid.match(/^event-(?:sub-)?assignment-(\d+)/);
-        if (assignment) {
+        const assignmentId = override ? (o.url?.match(/#assignment_(\d+)/)?.[1] ?? null) : (o.baseUid.match(/^event-(?:sub-)?assignment-(\d+)/)?.[1] ?? null);
+        if (assignmentId || override) {
           // The feed links to the calendar; rebuild the link to the assignment itself.
           const direct =
-            ctx?.courseId && o.baseUid.startsWith("event-assignment-")
-              ? `${ctx.origin}/courses/${ctx.courseId}/assignments/${assignment[1]}`
+            ctx?.courseId && assignmentId && !o.baseUid.startsWith("event-sub-")
+              ? `${ctx.origin}/courses/${ctx.courseId}/assignments/${assignmentId}`
               : o.url;
           addTask({
-            uid: o.uid,
+            // Keyed by the assignment, so a section date appearing or going away keeps done marks.
+            uid: override && assignmentId ? `event-assignment-${assignmentId}` : o.uid,
             courseKey,
             title,
             type: classify({ title }),
@@ -384,6 +401,18 @@ export function parseFeed(text: string, options: ParseOptions): FeedResult {
       }
     } catch {
       skipped++;
+    }
+  }
+
+  // Canvas only puts a course's code in its entries, and some courses have a code
+  // like "All Sections". A section name found above can name the class properly.
+  for (const [key, section] of sectionNames) {
+    const course = courses.get(key);
+    if (!course) continue;
+    const fromSection = courseLabels(section);
+    const known = findCourseCode(course.code);
+    if (!known || (known === fromSection.code && course.title === course.code)) {
+      courses.set(key, { ...course, code: fromSection.code, title: fromSection.title });
     }
   }
 

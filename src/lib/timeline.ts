@@ -1,29 +1,31 @@
 /**
- * Lay a day out as a timeline: events, planned work, leftover free time, and
- * deadlines, in the order they happen. Also answers "what should I be doing right
- * now", which is the first thing the Plan view shows.
+ * Lay a day out the way a student thinks about it: the things on their calendar,
+ * and between them, stretches of free time with the work planned for each one.
+ * Also answers "what should I be doing right now", which leads the Plan view.
  */
 import type { DayPlan, Gap, PlannedBlock, Plan } from "./planner";
 import type { CalEvent, Task } from "./types";
 
 const MINUTE = 60_000;
-/** Leftover free time shorter than this is not worth showing. */
-const SHOW_FREE_MIN = 15;
 
-export type TimelineItem =
+export interface PlannedWork {
+  block: PlannedBlock;
+  task: Task;
+}
+
+export type ScheduleItem =
   | { kind: "event"; key: string; start: Date; end: Date; event: CalEvent }
-  | { kind: "work"; key: string; start: Date; end: Date; block: PlannedBlock; task: Task }
-  | { kind: "free"; key: string; start: Date; end: Date; minutes: number }
-  | { kind: "due"; key: string; start: Date; end: Date; task: Task };
+  | { kind: "free"; key: string; start: Date; end: Date; minutes: number; work: PlannedWork[]; leftover: number }
+  | { kind: "due"; key: string; start: Date; task: Task };
 
-export interface DayTimeline {
-  items: TimelineItem[];
+export interface DaySchedule {
+  items: ScheduleItem[];
   allDayEvents: CalEvent[];
-  /** Work due today with no specific time. */
+  /** Work due on this day with no specific time. */
   dueAllDay: Task[];
 }
 
-const ORDER: Record<TimelineItem["kind"], number> = { event: 0, work: 1, free: 2, due: 3 };
+const ORDER: Record<ScheduleItem["kind"], number> = { event: 0, free: 1, due: 2 };
 
 function startOfDay(d: Date): Date {
   const x = new Date(d);
@@ -31,13 +33,13 @@ function startOfDay(d: Date): Date {
   return x;
 }
 
-export function buildDayTimeline(date: Date, dayPlan: DayPlan | null, events: CalEvent[], tasks: Task[]): DayTimeline {
+export function buildDaySchedule(date: Date, dayPlan: DayPlan | null, events: CalEvent[], tasks: Task[]): DaySchedule {
   const dayStart = startOfDay(date).getTime();
   const next = new Date(dayStart);
   next.setDate(next.getDate() + 1);
   const dayEnd = next.getTime();
   const taskById = new Map(tasks.map((t) => [t.id, t]));
-  const items: TimelineItem[] = [];
+  const items: ScheduleItem[] = [];
 
   const allDayEvents: CalEvent[] = [];
   for (const e of events) {
@@ -48,17 +50,18 @@ export function buildDayTimeline(date: Date, dayPlan: DayPlan | null, events: Ca
     else items.push({ kind: "event", key: `e:${e.id}`, start: new Date(s), end: new Date(en), event: e });
   }
 
-  if (dayPlan) {
-    for (const block of dayPlan.blocks) {
-      const task = taskById.get(block.taskId);
-      if (task) items.push({ kind: "work", key: `w:${block.taskId}:${block.part}`, start: block.start, end: block.end, block, task });
-    }
-    for (const gap of dayPlan.gaps) {
-      for (const [s, e] of leftovers(gap, dayPlan.blocks)) {
-        const minutes = Math.round((e - s) / MINUTE);
-        if (minutes >= SHOW_FREE_MIN) items.push({ kind: "free", key: `f:${s}`, start: new Date(s), end: new Date(e), minutes });
-      }
-    }
+  for (const gap of dayPlan?.gaps ?? []) {
+    const work = workIn(gap, dayPlan!.blocks, taskById);
+    const used = work.reduce((sum, w) => sum + w.block.minutes, 0);
+    items.push({
+      kind: "free",
+      key: `f:${gap.start.getTime()}`,
+      start: gap.start,
+      end: gap.end,
+      minutes: gap.minutes,
+      work,
+      leftover: Math.max(0, gap.minutes - used),
+    });
   }
 
   const dueAllDay: Task[] = [];
@@ -67,36 +70,29 @@ export function buildDayTimeline(date: Date, dayPlan: DayPlan | null, events: Ca
     const due = Date.parse(t.dueAt);
     if (due < dayStart || due >= dayEnd) continue;
     if (t.allDay) dueAllDay.push(t);
-    else items.push({ kind: "due", key: `d:${t.id}`, start: new Date(due), end: new Date(due), task: t });
+    else items.push({ kind: "due", key: `d:${t.id}`, start: new Date(due), task: t });
   }
 
   items.sort((a, b) => a.start.getTime() - b.start.getTime() || ORDER[a.kind] - ORDER[b.kind]);
   return { items, allDayEvents, dueAllDay };
 }
 
-/** The parts of a gap not taken by planned work. */
-function leftovers(gap: Gap, blocks: PlannedBlock[]): [number, number][] {
+/** The planned work that falls inside a gap, in order. */
+function workIn(gap: Gap, blocks: PlannedBlock[], taskById: Map<string, Task>): PlannedWork[] {
   const gs = gap.start.getTime();
   const ge = gap.end.getTime();
-  const taken = blocks
-    .map((b): [number, number] => [b.start.getTime(), b.end.getTime()])
-    .filter(([s, e]) => e > gs && s < ge)
-    .sort((a, b) => a[0] - b[0]);
-  const out: [number, number][] = [];
-  let cursor = gs;
-  for (const [s, e] of taken) {
-    if (s > cursor) out.push([cursor, s]);
-    cursor = Math.max(cursor, e);
-  }
-  if (cursor < ge) out.push([cursor, ge]);
-  return out;
+  return blocks
+    .filter((b) => b.start.getTime() >= gs && b.end.getTime() <= ge)
+    .sort((a, b) => a.start.getTime() - b.start.getTime())
+    .map((block) => ({ block, task: taskById.get(block.taskId)! }))
+    .filter((w) => w.task);
 }
 
 export type NowStatus =
-  | { state: "free"; until: Date; minutes: number; nextEvent: CalEvent | null; work: { block: PlannedBlock; task: Task }[] }
-  | { state: "busy"; event: CalEvent; next: Gap | null; work: { block: PlannedBlock; task: Task }[] }
-  | { state: "later"; next: Gap; work: { block: PlannedBlock; task: Task }[] }
-  | { state: "done"; };
+  | { state: "free"; until: Date; minutes: number; nextEvent: CalEvent | null; work: PlannedWork[] }
+  | { state: "busy"; event: CalEvent; next: Gap | null; work: PlannedWork[] }
+  | { state: "later"; next: Gap; work: PlannedWork[] }
+  | { state: "done" };
 
 /**
  * Where the student is right now, and what to do with the next stretch of free time.
@@ -105,11 +101,7 @@ export type NowStatus =
 export function nowStatus(plan: Plan, events: CalEvent[], tasks: Task[], now: Date): NowStatus {
   const today = plan.days[0];
   const taskById = new Map(tasks.map((t) => [t.id, t]));
-  const workIn = (gap: Gap) =>
-    (today?.blocks ?? [])
-      .filter((b) => b.start.getTime() >= gap.start.getTime() && b.end.getTime() <= gap.end.getTime())
-      .map((block) => ({ block, task: taskById.get(block.taskId)! }))
-      .filter((w) => w.task);
+  const work = (gap: Gap) => workIn(gap, today?.blocks ?? [], taskById);
 
   const t = now.getTime();
   const gaps = today?.gaps ?? [];
@@ -130,10 +122,10 @@ export function nowStatus(plan: Plan, events: CalEvent[], tasks: Task[], now: Da
       until: current.end,
       minutes: Math.round((current.end.getTime() - Math.max(t, current.start.getTime())) / MINUTE),
       nextEvent,
-      work: workIn(current),
+      work: work(current),
     };
   }
-  if (busyNow) return { state: "busy", event: busyNow, next: upcoming ?? null, work: upcoming ? workIn(upcoming) : [] };
-  if (upcoming) return { state: "later", next: upcoming, work: workIn(upcoming) };
+  if (busyNow) return { state: "busy", event: busyNow, next: upcoming ?? null, work: upcoming ? work(upcoming) : [] };
+  if (upcoming) return { state: "later", next: upcoming, work: work(upcoming) };
   return { state: "done" };
 }

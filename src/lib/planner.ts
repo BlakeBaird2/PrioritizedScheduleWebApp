@@ -325,7 +325,7 @@ export function buildPlan(input: PlanInput): Plan {
 export const DEFAULT_PREFS: PlanPrefs = {
   dayStart: 8 * 60,
   dayEnd: 22 * 60,
-  dailyMax: 6 * 60,
+  dailyMax: 4 * 60,
   buffer: 10,
   minGap: 20,
   weekends: true,

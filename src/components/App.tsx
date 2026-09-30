@@ -7,7 +7,7 @@ import { mergeChanges } from "@/lib/changes";
 import { fetchFeedFromApi, syncAll } from "@/lib/sync";
 import { feedIdFor, PROVIDER_LABEL } from "@/lib/feeds/url";
 import { decodeSetup, nextPersonalColor, pastDueIds, sanitizeWorkspace } from "@/lib/workspace";
-import { ASSIGNMENT_TYPES, type AssignmentType, type Change, type FeedResult, type FeedRole, type Snapshot, type Task, type Workspace } from "@/lib/types";
+import { type Change, type FeedResult, type FeedRole, type Snapshot, type Task, type Workspace } from "@/lib/types";
 import { DEFAULT_FILTERS, plural, type Filters } from "@/lib/ui";
 import { AppContext, type AppContextValue, type CalMode, type Selection, type View } from "./context";
 import { KEYS, parseJson, readStored, useStored, writeStored } from "./store";
@@ -43,13 +43,13 @@ function parseUi(raw: string | null): UiPrefs {
   const p = parseJson<Partial<UiPrefs>>(raw);
   if (!p || typeof p !== "object") return DEFAULT_UI;
   const f = p.filters;
-  const types = Array.isArray(f?.types) ? f.types.filter((t): t is AssignmentType => ASSIGNMENT_TYPES.includes(t as AssignmentType)) : [];
   return {
     view: p.view && VIEWS.includes(p.view) ? p.view : DEFAULT_UI.view,
     calMode: p.calMode && CAL_MODES.includes(p.calMode) ? p.calMode : DEFAULT_UI.calMode,
     filters: {
       courses: Array.isArray(f?.courses) ? f.courses.filter((c): c is string => typeof c === "string") : null,
-      types: types.length ? types : null,
+      // Type filters were retired; one saved by an older version must not hide work.
+      types: null,
       showCompleted: Boolean(f?.showCompleted),
     },
     setupDone: p.setupDone === true,

@@ -58,7 +58,7 @@ function stripNoise(value: string, code: string | null): string {
 }
 
 /** A fallback short label when no course code exists anywhere. */
-export function shorten(title: string, max = 18): string {
+export function shorten(title: string, max = 22): string {
   const s = title.trim();
   return s.length > max ? `${s.slice(0, max - 1).trimEnd()}…` : s || "Class";
 }

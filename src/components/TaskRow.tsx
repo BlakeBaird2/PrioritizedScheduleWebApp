@@ -2,6 +2,7 @@
 
 import { Check, CircleAlert, Clock3 } from "lucide-react";
 import type { Task } from "@/lib/types";
+import { differenceInCalendarDays, format } from "date-fns";
 import { clock, dueDate, duration, relativeDue, typeMeta, whenLabel } from "@/lib/ui";
 import { courseStyle, useApp } from "./context";
 import { TypeChip } from "./TypeChip";
@@ -27,25 +28,26 @@ export function DoneToggle({ task, size = "md" }: { task: Task; size?: "sm" | "m
   );
 }
 
-/** Where the plan put this task, or that it does not fit. */
+/** Where the plan put this task, or that it won't fit, in plain words. */
 export function PlanNote({ task }: { task: Task }) {
   const { index, now } = useApp();
   if (task.done) return null;
-  const risk = index.atRisk.get(task.id);
-  if (risk) {
+  if (index.atRisk.has(task.id)) {
     return (
       <span className="inline-flex items-center gap-1 text-danger font-medium">
         <CircleAlert size={12} />
-        {risk.planned > 0 ? `${duration(risk.shortBy)} short` : "No time before due"}
+        Won&apos;t fit in time
       </span>
     );
   }
   const first = index.blocks.get(task.id)?.[0];
   if (!first) return null;
+  const days = differenceInCalendarDays(first.start, now);
+  const day = days === 0 ? "today" : days === 1 ? "tomorrow" : format(first.start, "EEE");
   return (
     <span className="inline-flex items-center gap-1 text-accent font-medium">
       <Clock3 size={12} />
-      {whenLabel(first.start, now)}
+      Planned {day} {clock(first.start)}
     </span>
   );
 }
