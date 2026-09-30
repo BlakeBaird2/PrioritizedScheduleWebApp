@@ -8,6 +8,7 @@ import { duration, typeIconClass, typeMeta } from "@/lib/ui";
 import { useApp } from "./context";
 import { FeedAdder, FeedList, ProviderHelp } from "./Feeds";
 import { HoursForm, WeeklyEditor } from "./ScheduleSettings";
+import { ClassTimesEditor } from "./ClassTimes";
 import { resetEverything } from "./store";
 
 function Section({ title, hint, children }: { title: string; hint?: React.ReactNode; children: React.ReactNode }) {
@@ -81,11 +82,15 @@ export function SettingsView() {
         )}
       </Section>
 
+      <Section title="Class times" hint="When each class meets. Class calendars rarely include this, so add it here and Prio plans around it.">
+        <ClassTimesEditor />
+      </Section>
+
       <Section title="Your schedule" hint="Prio plans work inside these hours and around everything on your calendars.">
         <HoursForm advanced />
       </Section>
 
-      <Section title="Weekly busy times" hint="Things that happen every week but aren't on a calendar you added, like a job or practice.">
+      <Section title="Other weekly busy times" hint="Things that happen every week but aren't on a calendar you added, like a job or practice.">
         <WeeklyEditor />
       </Section>
 

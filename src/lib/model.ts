@@ -38,7 +38,17 @@ function pad(n: number) {
   return String(n).padStart(2, "0");
 }
 
-/** Expand weekly blocks into dated busy events around today. */
+export function dateKey(d: Date): string {
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+}
+
+/** The weekly block and date a weekly event came from, from its id. */
+export function parseWeeklyId(id: string): { blockId: string; date: string } | null {
+  const m = id.match(/^weekly:(.+)@(\d{4}-\d{2}-\d{2})$/);
+  return m ? { blockId: m[1], date: m[2] } : null;
+}
+
+/** Expand weekly blocks into dated busy events around today, leaving out skipped dates. */
 export function expandWeekly(blocks: WeeklyBlock[], now: Date, pastDays = 14, futureDays = 120): CalEvent[] {
   const out: CalEvent[] = [];
   const start = new Date(now);
@@ -47,8 +57,9 @@ export function expandWeekly(blocks: WeeklyBlock[], now: Date, pastDays = 14, fu
   for (let i = 0; i <= pastDays + futureDays; i++) {
     const day = new Date(start);
     day.setDate(start.getDate() + i);
+    const key = dateKey(day);
     for (const block of blocks) {
-      if (!block.days.includes(day.getDay())) continue;
+      if (!block.days.includes(day.getDay()) || block.skip?.includes(key)) continue;
       const [sh, sm] = block.start.split(":").map(Number);
       const [eh, em] = block.end.split(":").map(Number);
       const s = new Date(day);
@@ -56,16 +67,16 @@ export function expandWeekly(blocks: WeeklyBlock[], now: Date, pastDays = 14, fu
       const e = new Date(day);
       e.setHours(eh, em, 0, 0);
       out.push({
-        id: `weekly:${block.id}@${day.getFullYear()}-${pad(day.getMonth() + 1)}-${pad(day.getDate())}`,
+        id: `weekly:${block.id}@${key}`,
         feedId: null,
-        courseId: null,
+        courseId: block.courseId ?? null,
         title: block.label,
         start: s.toISOString(),
         end: e.toISOString(),
         allDay: false,
         busy: true,
-        kind: "event",
-        location: null,
+        kind: block.courseId ? "class" : "event",
+        location: block.location ?? null,
         url: null,
         color: WEEKLY_COLOR,
         source: "weekly",
@@ -197,7 +208,16 @@ export function buildModel(ws: Workspace, snapshot: Snapshot, now: Date): Model 
     );
   }
 
-  events.push(...expandWeekly(ws.weekly, now));
+  // Class times take the class's current name and colour, and go when the class does.
+  for (const e of expandWeekly(ws.weekly, now)) {
+    if (!e.courseId) {
+      events.push(e);
+      continue;
+    }
+    const course = courseById.get(e.courseId);
+    if (!course || course.hidden) continue;
+    events.push({ ...e, title: course.code, color: course.color });
+  }
 
   tasks.sort((a, b) => {
     const ad = a.dueAt ? Date.parse(a.dueAt) : Infinity;

@@ -36,3 +36,10 @@ test("timezones: bad values fall back and dates land on local midnight", () => {
   assert.equal(zonedEndOfDay(2026, 1, 15, "America/Denver").toISOString(), "2026-01-16T06:59:59.000Z");
   assert.equal(zonedStartOfDay(2026, 7, 15, "America/Denver").toISOString(), "2026-07-15T06:00:00.000Z");
 });
+
+test("security and software testing is not an exam", () => {
+  assert.equal(classify({ title: "Pen Test Project" }), "project");
+  assert.equal(classify({ title: "Penetration Test Report" }), "assignment");
+  assert.equal(classify({ title: "Unit 3 Test" }), "exam");
+  assert.equal(classify({ title: "Test 2" }), "exam");
+});

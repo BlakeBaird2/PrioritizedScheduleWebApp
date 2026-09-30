@@ -14,7 +14,7 @@ const TEST_RE = /\btests?\b/i;
 // "unit test"/"test cases" are software testing, but "Unit 3 Test" is an exam,
 // so only exclude when the qualifier sits directly next to the word "test".
 const TEST_NOT_EXAM_RE =
-  /\b(unit\s+tests?|integration\s+tests?|test\s*cases?|testing|test[- ]driven|tdd|test\s+suite|write\s+tests?|a\/b\s+tests?|beta\s+tests?|speed\s+tests?|typing\s+tests?)\b/i;
+  /\b(unit\s+tests?|integration\s+tests?|test\s*cases?|testing|test[- ]driven|tdd|test\s+suite|write\s+tests?|a\/b\s+tests?|beta\s+tests?|speed\s+tests?|typing\s+tests?|pen(?:etration)?\s*tests?|load\s+tests?|stress\s+tests?)\b/i;
 const QUIZ_RE = /\bquiz(?:zes)?\b/i;
 const READING_RE = /\b(read(?:ing|ings)?|chapters?|ch\.?\s*\d|chap\.?\s*\d|textbook|pages?\s*\d|pp\.?\s*\d|article|excerpt)\b/i;
 const PROJECT_RE = /\b(projects?|milestones?|deliverables?|capstone|prototype|proposal|sprint)\b/i;
@@ -29,7 +29,8 @@ function isFinalExamPhrase(text: string): boolean {
 export function looksLikeExam(text: string): boolean {
   if (/\b(exams?|midterms?)\b/i.test(text)) return true;
   if (isFinalExamPhrase(text)) return true;
-  if (TEST_RE.test(text) && !TEST_NOT_EXAM_RE.test(text)) return true;
+  // A bare "test" is an exam, unless the title is plainly a project ("Test Plan Project").
+  if (TEST_RE.test(text) && !TEST_NOT_EXAM_RE.test(text) && !PROJECT_RE.test(text)) return true;
   return false;
 }
 

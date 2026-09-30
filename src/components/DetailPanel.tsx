@@ -4,6 +4,7 @@ import { useEffect, useMemo } from "react";
 import { differenceInCalendarDays, format } from "date-fns";
 import { ArrowRight, CircleAlert, Clock3, ExternalLink, MapPin, Trash, X } from "lucide-react";
 import { PROVIDER_LABEL } from "@/lib/feeds/url";
+import { parseWeeklyId } from "@/lib/model";
 import type { CalEvent, Task } from "@/lib/types";
 import { clockRange, dueDate, duration, relativeDue, typeMeta } from "@/lib/ui";
 import { courseStyle, useApp, type Selection } from "./context";
@@ -223,12 +224,22 @@ function TaskDetail({ task, onClose }: { task: Task; onClose: () => void }) {
 }
 
 function EventDetail({ event, onClose }: { event: CalEvent; onClose: () => void }) {
-  const { model, setView } = useApp();
+  const { model, setView, update, openClassTimes } = useApp();
   const course = event.courseId ? model.courseById.get(event.courseId) : undefined;
   const feed = event.feedId ? model.feedById.get(event.feedId) : undefined;
   const start = new Date(event.start);
   const end = new Date(event.end);
-  const kind = event.kind === "class" ? "Class meeting" : event.kind === "exam" ? "Exam" : event.source === "weekly" ? "Weekly busy time" : "Event";
+  const weekly = parseWeeklyId(event.id);
+  const kind = event.kind === "class" ? "Class" : event.kind === "exam" ? "Exam" : event.source === "weekly" ? "Every week" : "Event";
+
+  const skipDay = () => {
+    if (!weekly) return;
+    update((w) => ({
+      ...w,
+      weekly: w.weekly.map((b) => (b.id === weekly.blockId ? { ...b, skip: [...new Set([...(b.skip ?? []), weekly.date])].sort() } : b)),
+    }));
+    onClose();
+  };
 
   return (
     <>
@@ -238,7 +249,7 @@ function EventDetail({ event, onClose }: { event: CalEvent; onClose: () => void 
           <h2 className="font-semibold leading-snug">{event.title}</h2>
           <div className="mt-1 text-xs text-muted">
             {kind}
-            {course ? <span className="course-text font-medium"> · {course.code}</span> : feed ? ` · ${feed.name}` : ""}
+            {course && course.code !== event.title ? <span className="course-text font-medium"> · {course.code}</span> : feed ? ` · ${feed.name}` : ""}
           </div>
         </div>
         <button type="button" className="btn btn-icon" onClick={onClose} aria-label="Close">
@@ -265,17 +276,23 @@ function EventDetail({ event, onClose }: { event: CalEvent; onClose: () => void 
         <p className="text-sm text-muted">
           {event.busy ? "Prio plans your work around this." : "This doesn't block your time, so Prio can plan work during it."}
         </p>
-        {event.source === "weekly" ? (
-          <button
-            type="button"
-            className="btn"
-            onClick={() => {
-              setView("settings");
-              onClose();
-            }}
-          >
-            Edit weekly busy times
-          </button>
+        {weekly ? (
+          <div className="space-y-2">
+            <button type="button" className="btn w-full justify-center" onClick={skipDay}>
+              Not happening on {format(start, "EEE, MMM d")}
+            </button>
+            <button
+              type="button"
+              className="btn w-full justify-center"
+              onClick={() => {
+                onClose();
+                if (event.courseId) openClassTimes();
+                else setView("settings");
+              }}
+            >
+              {event.courseId ? "Change class times" : "Change weekly busy times"}
+            </button>
+          </div>
         ) : null}
         {event.url ? (
           <a href={event.url} target="_blank" rel="noreferrer" className="btn w-full justify-center">

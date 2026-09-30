@@ -22,6 +22,7 @@ import { SettingsView } from "./SettingsView";
 import { DetailPanel } from "./DetailPanel";
 import { AddTaskDialog } from "./AddTaskDialog";
 import { ImportDialog } from "./ImportDialog";
+import { ClassTimesDialog } from "./ClassTimes";
 
 // ---------------------------------------------------------------------------
 // Reading what the browser has stored
@@ -33,11 +34,12 @@ interface UiPrefs {
   filters: Filters;
   /** Whether the first-run setup has been finished. */
   setupDone: boolean;
+  hideClassTimesTip: boolean;
 }
 
 const VIEWS: View[] = ["plan", "calendar", "upcoming", "classes", "settings"];
 const CAL_MODES: CalMode[] = ["month", "week", "day"];
-const DEFAULT_UI: UiPrefs = { view: "plan", calMode: "week", filters: DEFAULT_FILTERS, setupDone: false };
+const DEFAULT_UI: UiPrefs = { view: "plan", calMode: "week", filters: DEFAULT_FILTERS, setupDone: false, hideClassTimesTip: false };
 
 function parseUi(raw: string | null): UiPrefs {
   const p = parseJson<Partial<UiPrefs>>(raw);
@@ -53,6 +55,7 @@ function parseUi(raw: string | null): UiPrefs {
       showCompleted: Boolean(f?.showCompleted),
     },
     setupDone: p.setupDone === true,
+    hideClassTimesTip: p.hideClassTimesTip === true,
   };
 }
 
@@ -168,6 +171,7 @@ export function App() {
   const [planDay, setPlanDay] = useState(0);
   const [selected, setSelected] = useState<Selection>(null);
   const [addOpen, setAddOpen] = useState(false);
+  const [classTimesOpen, setClassTimesOpen] = useState(false);
   const [syncing, setSyncing] = useState(false);
   const syncingRef = useRef(false);
 
@@ -434,6 +438,9 @@ export function App() {
     select: setSelected,
     reveal,
     openAddTask: () => setAddOpen(true),
+    openClassTimes: () => setClassTimesOpen(true),
+    classTimesTipHidden: ui.hideClassTimesTip,
+    hideClassTimesTip: () => writeUi({ hideClassTimesTip: true }),
     clearChanges,
     toast,
   };
@@ -459,6 +466,7 @@ export function App() {
           </main>
           {selected ? <DetailPanel selection={selected} onClose={() => setSelected(null)} /> : null}
           {addOpen ? <AddTaskDialog onClose={() => setAddOpen(false)} /> : null}
+          {classTimesOpen ? <ClassTimesDialog onClose={() => setClassTimesOpen(false)} /> : null}
         </div>
       )}
       {incoming.pending ? (

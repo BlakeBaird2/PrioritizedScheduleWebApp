@@ -20,8 +20,13 @@ it and start.
 - **Calendar** — month, week and day. Week and day are time grids showing your
   classes, your personal events and your planned work side by side.
 - **Upcoming** — everything due, by day, with where it sits in the plan.
-- **Classes** — one card per class, created automatically from your calendars.
-  Rename, recolour or hide any of them.
+- **Classes** — one card per class, created automatically from your calendars,
+  with when it meets. Rename, recolour or hide any of them.
+- **Class times** — class calendars list what's due, rarely when class is. Add
+  each class's days and times once (during setup, in Settings, or from the
+  prompt on the Plan screen) and they show on your calendar in the class's
+  colour and block that time in the plan. Classes whose calendar already has
+  meetings say so. Click any meeting to mark a single day off, like a holiday.
 - **Change alerts** — each refresh is compared with the last. When a due date
   moves, or work is added or removed, the bell says so. Click to jump to it.
 - **Your own tasks** — add work no calendar knows about with the + button.
@@ -32,7 +37,8 @@ Two steps, kept simple on purpose so you can always tell why it says what it say
 
 1. **Find the gaps.** Each day has working hours (8 AM–10 PM by default).
    Everything busy on your calendars, plus any weekly busy times you add, is cut
-   out with a little breathing room either side (10 minutes by default). What's
+   out, class times included, with a little breathing room either side (10
+   minutes by default). What's
    left, if it's at least 20 minutes long, is free time.
 2. **Fill them, soonest deadline first.** Going through the gaps in order, each
    gets the most urgent unfinished work that fits. If the most urgent thing is

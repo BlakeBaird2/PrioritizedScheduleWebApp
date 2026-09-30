@@ -6,6 +6,8 @@ import { randomId } from "@/lib/workspace";
 import type { PlanPrefs, WeeklyBlock } from "@/lib/types";
 import { duration, hhmmToMinutes, minutesLabel, minutesToHHMM } from "@/lib/ui";
 import { useApp } from "./context";
+import { DayToggles } from "./ClassTimes";
+import { daysLabel } from "@/lib/meetings";
 
 export function Switch({ checked, onChange, label }: { checked: boolean; onChange: (v: boolean) => void; label: string }) {
   return <button type="button" role="switch" aria-checked={checked} aria-label={label} className="switch" onClick={() => onChange(!checked)} />;
@@ -91,22 +93,12 @@ export function HoursForm({ advanced = false }: { advanced?: boolean }) {
   );
 }
 
-const DAYS = ["S", "M", "T", "W", "T", "F", "S"];
-const DAY_NAMES = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-
-function daysLabel(days: number[]): string {
-  const key = [...days].sort().join("");
-  if (key === "12345") return "Weekdays";
-  if (key === "06") return "Weekends";
-  if (key === "0123456") return "Every day";
-  return [...days].sort().map((d) => DAY_NAMES[d]).join(", ");
-}
-
 /** Recurring busy time that isn't in any calendar: a job, practice, a commute. */
 export function WeeklyEditor() {
   const { ws, update } = useApp();
   const [label, setLabel] = useState("");
   const [days, setDays] = useState<number[]>([1, 3, 5]);
+  const blocks = ws.weekly.filter((b) => !b.courseId);
   const [start, setStart] = useState("09:00");
   const [end, setEnd] = useState("12:00");
   const [error, setError] = useState<string | null>(null);
@@ -123,9 +115,9 @@ export function WeeklyEditor() {
 
   return (
     <div className="space-y-3">
-      {ws.weekly.length > 0 ? (
+      {blocks.length > 0 ? (
         <ul className="space-y-1.5">
-          {ws.weekly.map((b) => (
+          {blocks.map((b) => (
             <li key={b.id} className="flex items-center gap-3 rounded-xl border border-line bg-surface px-3 py-2">
               <span className="w-2.5 h-2.5 rounded-full bg-[#78716c] shrink-0" />
               <div className="min-w-0 flex-1">
@@ -150,22 +142,7 @@ export function WeeklyEditor() {
       <form onSubmit={add} className="rounded-xl border border-dashed border-line-strong p-3 space-y-2.5">
         <input className="input" placeholder="What is it? (Work, practice, commute…)" value={label} onChange={(e) => setLabel(e.target.value)} maxLength={60} />
         <div className="flex items-center gap-2 flex-wrap">
-          <div className="flex gap-1" role="group" aria-label="Days">
-            {DAYS.map((d, i) => (
-              <button
-                key={i}
-                type="button"
-                aria-pressed={days.includes(i)}
-                aria-label={DAY_NAMES[i]}
-                onClick={() => setDays((cur) => (cur.includes(i) ? cur.filter((x) => x !== i) : [...cur, i]))}
-                className={`w-8 h-8 rounded-full text-xs font-semibold border transition ${
-                  days.includes(i) ? "bg-accent text-white border-accent" : "border-line text-muted hover:border-line-strong"
-                }`}
-              >
-                {d}
-              </button>
-            ))}
-          </div>
+          <DayToggles value={days} onChange={setDays} />
           <div className="flex items-center gap-1.5">
             <input type="time" step={900} className="input input-sm" aria-label="Starts" value={start} onChange={(e) => setStart(e.target.value)} />
             <span className="text-muted text-sm">to</span>

@@ -49,6 +49,10 @@ export interface AppContextValue {
   /** Open a task on the day it is planned or due. */
   reveal: (taskId: string) => void;
   openAddTask: () => void;
+  openClassTimes: () => void;
+  /** Whether the "add your class times" suggestion was dismissed. */
+  classTimesTipHidden: boolean;
+  hideClassTimesTip: () => void;
   clearChanges: () => void;
   toast: (message: string) => void;
 }

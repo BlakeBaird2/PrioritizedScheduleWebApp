@@ -8,6 +8,7 @@ import type { FeedConfig, Workspace } from "@/lib/types";
 import { useApp } from "./context";
 import { FeedAdder, FeedList, ProviderHelp } from "./Feeds";
 import { HoursForm, WeeklyEditor } from "./ScheduleSettings";
+import { ClassTimesEditor } from "./ClassTimes";
 import { KEYS, writeStored } from "./store";
 
 function demoWorkspace(): Workspace {
@@ -20,9 +21,15 @@ function demoWorkspace(): Workspace {
     color,
     enabled: true,
   });
+  const canvas = feedIdFor("demo:canvas");
   return {
     ...defaultWorkspace(),
     demo: true,
+    // The sample Canvas calendar has meeting times for one class only, like most real ones.
+    weekly: [
+      { id: "demo-cs", label: "Class", courseId: `${canvas}:course_4102`, days: [1, 3, 5], start: "11:00", end: "11:50", location: "TMCB 1170" },
+      { id: "demo-bus", label: "Class", courseId: `${canvas}:course_4101`, days: [2, 4], start: "11:30", end: "12:45", location: "TNRB 120" },
+    ],
     feeds: [
       feed("demo:canvas", "Canvas (sample)", "school", "canvas", PERSONAL_COLORS[0]),
       feed("demo:course", "Principles of Accounting (sample)", "school", "other", PERSONAL_COLORS[1]),
@@ -39,9 +46,10 @@ export function startDemo() {
 }
 
 export function Onboarding({ onFinish }: { onFinish: () => void }) {
-  const { ws } = useApp();
-  const [step, setStep] = useState<1 | 2>(1);
+  const { ws, model } = useApp();
+  const [step, setStep] = useState<1 | 2 | 3>(1);
   const hasSchool = ws.feeds.some((f) => f.role === "school");
+  const hasClasses = model.visibleCourses.length > 0;
 
   return (
     <div className="min-h-dvh px-4 py-10 sm:py-16">
@@ -53,10 +61,11 @@ export function Onboarding({ onFinish }: { onFinish: () => void }) {
           Your classes, work and life on one calendar, and a plan for exactly what to work on in every free gap.
         </p>
 
-        <div className="mt-6 flex items-center gap-2 text-xs font-medium text-muted" aria-label={`Step ${step} of 2`}>
-          <span className={`h-1 w-10 rounded-full ${step >= 1 ? "bg-accent" : "bg-line"}`} />
-          <span className={`h-1 w-10 rounded-full ${step >= 2 ? "bg-accent" : "bg-line"}`} />
-          <span className="ml-1">Step {step} of 2</span>
+        <div className="mt-6 flex items-center gap-2 text-xs font-medium text-muted" aria-label={`Step ${step} of 3`}>
+          {[1, 2, 3].map((n) => (
+            <span key={n} className={`h-1 w-10 rounded-full ${step >= n ? "bg-accent" : "bg-line"}`} />
+          ))}
+          <span className="ml-1">Step {step} of 3</span>
         </div>
 
         {step === 1 ? (
@@ -72,7 +81,7 @@ export function Onboarding({ onFinish }: { onFinish: () => void }) {
             <FeedList />
             <ProviderHelp />
             <div className="flex items-center gap-3 flex-wrap pt-1">
-              <button type="button" className="btn-primary" disabled={ws.feeds.length === 0} onClick={() => setStep(2)}>
+              <button type="button" className="btn-primary" disabled={ws.feeds.length === 0} onClick={() => setStep(hasClasses ? 2 : 3)}>
                 Continue
                 <ArrowRight size={16} />
               </button>
@@ -87,6 +96,27 @@ export function Onboarding({ onFinish }: { onFinish: () => void }) {
               ) : null}
             </div>
           </section>
+        ) : step === 2 ? (
+          <section className="card p-5 sm:p-6 mt-3 space-y-4">
+            <div>
+              <h1 className="text-lg font-semibold">When do your classes meet?</h1>
+              <p className="mt-1 text-sm text-muted leading-relaxed">
+                Class calendars usually list what&apos;s due, not when class is. Add each class&apos;s days and times once so they show on your calendar and
+                Prio plans around them. Skip any class that doesn&apos;t meet in person.
+              </p>
+            </div>
+            <ClassTimesEditor />
+            <div className="flex items-center gap-2 pt-1">
+              <button type="button" className="btn" onClick={() => setStep(1)}>
+                <ArrowLeft size={15} />
+                Back
+              </button>
+              <button type="button" className="btn-primary ml-auto" onClick={() => setStep(3)}>
+                Continue
+                <ArrowRight size={16} />
+              </button>
+            </div>
+          </section>
         ) : (
           <section className="card p-5 sm:p-6 mt-3 space-y-5">
             <div>
@@ -97,12 +127,12 @@ export function Onboarding({ onFinish }: { onFinish: () => void }) {
             </div>
             <HoursForm />
             <div>
-              <h2 className="text-sm font-semibold">Busy every week, but not on a calendar?</h2>
-              <p className="mt-0.5 mb-3 text-xs text-muted leading-relaxed">A job, practice, or commute. Add it so Prio plans around it. You can skip this.</p>
+              <h2 className="text-sm font-semibold">Anything else every week?</h2>
+              <p className="mt-0.5 mb-3 text-xs text-muted leading-relaxed">A job, practice, or commute that isn&apos;t on a calendar you added. You can skip this.</p>
               <WeeklyEditor />
             </div>
             <div className="flex items-center gap-2 pt-1">
-              <button type="button" className="btn" onClick={() => setStep(1)}>
+              <button type="button" className="btn" onClick={() => setStep(hasClasses ? 2 : 1)}>
                 <ArrowLeft size={15} />
                 Back
               </button>

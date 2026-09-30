@@ -75,7 +75,16 @@ function sanitizeWeekly(raw: unknown): WeeklyBlock | null {
   const end = str(raw.end);
   const days = Array.isArray(raw.days) ? [...new Set(raw.days.filter((d): d is number => Number.isInteger(d) && d >= 0 && d <= 6))].sort() : [];
   if (!HHMM.test(start) || !HHMM.test(end) || end <= start || days.length === 0) return null;
-  return { id: str(raw.id) || randomId(), label: str(raw.label).trim() || "Busy", days, start, end };
+  const block: WeeklyBlock = { id: str(raw.id) || randomId(), label: str(raw.label).trim().slice(0, 60) || "Busy", days, start, end };
+  const courseId = str(raw.courseId).trim();
+  if (courseId) block.courseId = courseId;
+  const location = str(raw.location).trim().slice(0, 80);
+  if (location) block.location = location;
+  if (Array.isArray(raw.skip)) {
+    const skip = [...new Set(raw.skip.filter((d): d is string => typeof d === "string" && /^\d{4}-\d{2}-\d{2}$/.test(d)))].sort().slice(-100);
+    if (skip.length) block.skip = skip;
+  }
+  return block;
 }
 
 function sanitizeManual(raw: unknown): ManualTask | null {

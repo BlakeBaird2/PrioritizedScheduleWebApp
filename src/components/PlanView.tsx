@@ -2,7 +2,7 @@
 
 import { useMemo } from "react";
 import { addDays, differenceInCalendarDays, format, startOfDay } from "date-fns";
-import { ArrowRight, Check, CircleAlert, Flag, MapPin } from "lucide-react";
+import { ArrowRight, CalendarClock, Check, CircleAlert, Flag, MapPin } from "lucide-react";
 import type { PlannedWork, ScheduleItem } from "@/lib/timeline";
 import { buildDaySchedule, nowStatus } from "@/lib/timeline";
 import type { Task } from "@/lib/types";
@@ -10,6 +10,7 @@ import { clock, clockRange, dueIn, duration, minutesLabel, plural, typeMeta } fr
 import { courseStyle, useApp } from "./context";
 import { DoneToggle, PlanNote } from "./TaskRow";
 import { TypeChip } from "./TypeChip";
+import { useClassesWithoutTimes } from "./ClassTimes";
 
 /**
  * The home screen. Three questions, in order:
@@ -25,6 +26,7 @@ export function PlanView() {
         <h1 className="text-2xl font-semibold tracking-tight">{format(now, "EEEE, MMMM d")}</h1>
         <p className="mt-0.5 text-sm text-muted">Prio fills your free time with whatever is due soonest. Tick things off as you finish them.</p>
       </header>
+      <ClassTimesPrompt />
       <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_22rem] items-start">
         <div className="space-y-5 min-w-0">
           <NowCard />
@@ -33,6 +35,35 @@ export function PlanView() {
         <DueSoon />
       </div>
     </div>
+  );
+}
+
+/** Asks for class times until every class has them, or the person says not now. */
+function ClassTimesPrompt() {
+  const { openClassTimes, classTimesTipHidden, hideClassTimesTip } = useApp();
+  const missing = useClassesWithoutTimes();
+  if (classTimesTipHidden || missing.length === 0) return null;
+  const names = missing.map((c) => c.code);
+  const list = names.length <= 3 ? names.join(", ") : `${names.slice(0, 3).join(", ")} and ${names.length - 3} more`;
+  return (
+    <section className="rounded-[var(--radius-xl)] border border-accent/30 bg-accent/[0.06] p-4 flex items-start gap-3 flex-wrap">
+      <CalendarClock size={18} className="text-accent shrink-0 mt-0.5" />
+      <div className="min-w-0 flex-1 basis-60">
+        <p className="text-sm font-semibold">When do your classes meet?</p>
+        <p className="mt-0.5 text-sm text-muted">
+          Your class calendars don&apos;t include class times for {list}. Add them once and they&apos;ll show on your calendar, so your real free time is
+          clear.
+        </p>
+      </div>
+      <div className="flex items-center gap-2">
+        <button type="button" className="btn-primary !py-1.5 !text-[0.8125rem]" onClick={openClassTimes}>
+          Add class times
+        </button>
+        <button type="button" className="btn" onClick={hideClassTimesTip}>
+          Not now
+        </button>
+      </div>
+    </section>
   );
 }
 
@@ -259,7 +290,10 @@ function EventRow({ item }: { item: Extract<ScheduleItem, { kind: "event" }> }) 
   const { model, select } = useApp();
   const e = item.event;
   const course = e.courseId ? model.courseById.get(e.courseId) : undefined;
-  const source = course?.code ?? (e.source === "weekly" ? "Weekly" : e.feedId ? model.feedById.get(e.feedId)?.name : undefined);
+  const details = [
+    course ? (course.code !== e.title ? course.code : null) : e.feedId ? (model.feedById.get(e.feedId)?.name ?? null) : null,
+    e.kind === "class" ? "Class" : e.kind === "exam" ? "Exam" : null,
+  ].filter(Boolean);
   return (
     <button
       type="button"
@@ -269,7 +303,7 @@ function EventRow({ item }: { item: Extract<ScheduleItem, { kind: "event" }> }) 
     >
       <div className="text-sm font-medium truncate">{e.title}</div>
       <div className="text-xs text-muted flex items-center gap-1.5 min-w-0">
-        {source ? <span className="course-text font-medium truncate">{source}</span> : null}
+        {details.length ? <span className="course-text font-medium truncate">{details.join(" · ")}</span> : null}
         {e.location ? (
           <span className="inline-flex items-center gap-0.5 truncate">
             <MapPin size={11} className="shrink-0" />

@@ -1,13 +1,14 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { ChevronDown, ExternalLink, EyeOff, Pencil } from "lucide-react";
+import { ChevronDown, ExternalLink, EyeOff, Pencil, Plus } from "lucide-react";
 import { COURSE_COLORS } from "@/lib/model";
 import type { Course, CourseEdit, Task } from "@/lib/types";
 import { applyFilters, duration, plural, relativeDue, typeIconClass, typeMeta } from "@/lib/ui";
 import { courseStyle, useApp } from "./context";
 import { Switch } from "./ScheduleSettings";
 import { TaskRow } from "./TaskRow";
+import { ClassTimesSummary, useClassTimes } from "./ClassTimes";
 
 export function ClassesView() {
   const { model } = useApp();
@@ -94,6 +95,9 @@ function CourseCard({ course }: { course: Course }) {
             ) : null}
           </div>
           <p className="text-xs text-muted truncate">from {feed?.name ?? "a calendar"}</p>
+          <div className="mt-1.5">
+            <MeetsLine course={course} />
+          </div>
         </div>
         {course.url ? (
           <a href={course.url} target="_blank" rel="noreferrer" className="btn btn-icon" title="Open the class site" aria-label={`Open ${course.code}`}>
@@ -154,6 +158,24 @@ function CourseCard({ course }: { course: Course }) {
         </div>
       ) : null}
     </section>
+  );
+}
+
+function MeetsLine({ course }: { course: Course }) {
+  const { openClassTimes } = useApp();
+  const { any } = useClassTimes(course);
+  if (any) {
+    return (
+      <button type="button" onClick={openClassTimes} className="text-left hover:opacity-80" title="Change class times">
+        <ClassTimesSummary course={course} />
+      </button>
+    );
+  }
+  return (
+    <button type="button" onClick={openClassTimes} className="inline-flex items-center gap-1 text-xs text-accent font-medium hover:underline">
+      <Plus size={12} />
+      Add class times
+    </button>
   );
 }
 

@@ -1,7 +1,8 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { decodeSetup, defaultWorkspace, encodeSetup, pastDueIds, sanitizeWorkspace } from "../workspace";
-import { buildModel, busyIntervals, expandWeekly } from "../model";
+import { buildModel, busyIntervals, expandWeekly, parseWeeklyId } from "../model";
+import { daysLabel, meetingPatterns } from "../meetings";
 import { diffFeed, mergeChanges } from "../changes";
 import { syncAll } from "../sync";
 import { feedIdFor } from "../feeds/url";
@@ -230,4 +231,57 @@ test("work already past due when a calendar is added is picked out by id", () =>
     ],
   };
   assert.deepEqual(pastDueIds("f1", result, new Date("2026-09-15T00:00:00.000Z")), ["f1:a"]);
+});
+
+// ---------------------------------------------------------------------------
+// Class times
+// ---------------------------------------------------------------------------
+
+test("class times keep their class, room and skipped days through storage", () => {
+  const ws = sanitizeWorkspace({
+    weekly: [{ id: "c1", label: "Class", courseId: "f:course_1", location: " TMCB 1170 ", days: [1, 3], start: "09:30", end: "10:45", skip: ["2026-11-26", "bad", "2026-11-26"] }],
+  });
+  assert.deepEqual(ws.weekly[0], { id: "c1", label: "Class", courseId: "f:course_1", location: "TMCB 1170", days: [1, 3], start: "09:30", end: "10:45", skip: ["2026-11-26"] });
+});
+
+test("a class time shows as that class, in its colour, and a skipped day is left out", () => {
+  const school = feed("https://school.example/cal.ics");
+  const courseId = `${school.id}:course_1`;
+  const ws: Workspace = {
+    ...defaultWorkspace(),
+    feeds: [school],
+    courseEdits: { [courseId]: { color: "#123456" } },
+    weekly: [{ id: "c1", label: "Class", courseId, days: [1, 3], start: "09:30", end: "10:45", skip: ["2026-10-05"] }],
+  };
+  const snapshot = {
+    at: null,
+    feeds: {
+      [school.id]: {
+        result: { url: school.url, provider: "canvas" as const, role: "school" as const, calendarName: null, fetchedAt: NOW.toISOString(), courses: [{ key: "course_1", code: "NET 460", title: "Network Security", url: null }], tasks: [], events: [], skipped: 0 },
+        error: null,
+        syncedAt: null,
+      },
+    },
+  };
+  const m = buildModel(ws, snapshot, NOW);
+  const meetings = m.events.filter((e) => e.source === "weekly" && new Date(e.start) >= NOW && new Date(e.start) < new Date(NOW.getTime() + 8 * 86_400_000));
+  assert.deepEqual(meetings.map((e) => new Date(e.start).toDateString()), ["Wed Oct 07 2026"], "Monday Oct 5 was skipped");
+  assert.equal(meetings[0].title, "NET 460");
+  assert.equal(meetings[0].color, "#123456");
+  assert.equal(meetings[0].kind, "class");
+  assert.ok(busyIntervals(m.events).some((b) => b.start.getTime() === Date.parse(meetings[0].start)), "class time is busy for the planner");
+  assert.deepEqual(parseWeeklyId(meetings[0].id), { blockId: "c1", date: "2026-10-07" });
+
+  const hidden = buildModel({ ...ws, courseEdits: { [courseId]: { hidden: true } } }, snapshot, NOW);
+  assert.equal(hidden.events.filter((e) => e.source === "weekly").length, 0, "a hidden class's times go with it");
+});
+
+test("meetings already on a class calendar are described in plain words", () => {
+  const at = (d: number, h: number, m = 0) => new Date(2026, 9, d, h, m).toISOString();
+  const ev = (start: string, end: string) => ({ id: start, feedId: "f", courseId: "c", title: "Class", start, end, allDay: false, busy: true, kind: "class" as const, location: null, url: null, color: "#000000", source: "feed" as const });
+  const events = [ev(at(5, 9, 30), at(5, 10, 45)), ev(at(7, 9, 30), at(7, 10, 45)), ev(at(12, 9, 30), at(12, 10, 45))];
+  assert.deepEqual(meetingPatterns(events, "c", NOW), [{ days: [1, 3], start: 570, end: 645 }]);
+  assert.equal(daysLabel([3, 1]), "Mon, Wed");
+  assert.equal(daysLabel([0, 2, 4]), "Tue, Thu, Sun");
+  assert.equal(daysLabel([1, 2, 3, 4, 5]), "Weekdays");
 });

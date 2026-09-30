@@ -100,7 +100,10 @@ export interface FeedConfig {
   enabled: boolean;
 }
 
-/** A recurring busy block the feeds do not cover, such as class times or a work shift. */
+/**
+ * Something that happens every week and isn't on a calendar feed: when a class
+ * meets, a work shift, practice.
+ */
 export interface WeeklyBlock {
   id: string;
   label: string;
@@ -108,6 +111,11 @@ export interface WeeklyBlock {
   days: number[];
   start: string; // "HH:MM"
   end: string; // "HH:MM"
+  /** Set when this is a class meeting; the class supplies its name and colour. */
+  courseId?: string | null;
+  location?: string | null;
+  /** Dates ("YYYY-MM-DD") when it isn't happening, such as a holiday. */
+  skip?: string[];
 }
 
 /** Work the user added by hand, for things no feed knows about. */
