@@ -72,9 +72,7 @@ export function TaskRow({ task, showDate = false, hideCourse = false }: { task: 
         }
       }}
       style={courseStyle(course?.color ?? "var(--line-strong)")}
-      className={`group flex items-center gap-3 rounded-xl border border-line bg-surface pr-3 py-2.5 cursor-pointer hover:shadow-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/50 ${
-        hideCourse ? "pl-3 hover:border-line-strong" : "course-item"
-      } ${task.done ? "row-done" : ""}`}
+      className={`task-card group flex items-center gap-3 px-3 py-2.5 cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/50 ${task.done ? "row-done" : ""}`}
     >
       <DoneToggle task={task} />
       <div className="min-w-0 flex-1">
@@ -83,7 +81,12 @@ export function TaskRow({ task, showDate = false, hideCourse = false }: { task: 
           {meta.loud ? <TypeChip type={task.type} /> : null}
         </div>
         <div className="mt-0.5 flex items-center gap-x-2 gap-y-0.5 text-xs text-muted min-w-0 flex-wrap">
-          {!hideCourse && course ? <span className="course-text font-medium truncate max-w-[9rem]">{course.code}</span> : null}
+          {!hideCourse && course ? (
+            <span className="inline-flex items-center gap-1.5 course-text font-medium min-w-0 max-w-[10rem]">
+              <span className="course-dot" />
+              <span className="truncate">{course.code}</span>
+            </span>
+          ) : null}
           {!meta.loud ? (
             <span className="inline-flex items-center gap-1">
               <meta.icon size={12} />

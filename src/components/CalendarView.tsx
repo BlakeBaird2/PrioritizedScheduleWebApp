@@ -110,7 +110,7 @@ export function CalendarView() {
         {calMode !== "month" ? (
           <>
             <span className="inline-flex items-center gap-1.5">
-              <span className="w-3 h-3 rounded-[4px] bg-surface-2 border-l-[3px] border-l-muted" /> Events
+              <span className="w-3 h-3 event-block !rounded-[4px]" style={courseStyle("#64748b")} /> Events
             </span>
             <span className="inline-flex items-center gap-1.5">
               <span className="w-3 h-3 rounded-[4px] border border-dashed border-accent" /> Planned work
@@ -375,11 +375,11 @@ function TimeGrid({ days, data }: { days: Date[]; data: CalData }) {
                         key={item.id}
                         type="button"
                         onClick={() => select({ kind: "event", id: e.id })}
-                        className={`absolute text-left overflow-hidden rounded-md px-1.5 py-0.5 course-tint border-l-[3px] hover:brightness-95 dark:hover:brightness-110 ${e.busy ? "" : "opacity-60"}`}
-                        style={{ ...style, ...courseStyle(e.color), borderLeftColor: e.color }}
+                        className={`event-block absolute flex flex-col justify-start text-left overflow-hidden !rounded-lg px-1.5 py-1 ${e.busy ? "" : "opacity-60"}`}
+                        style={{ ...style, ...courseStyle(e.color) }}
                         title={`${e.title} · ${clockRange(new Date(e.start), new Date(e.end))}`}
                       >
-                        <div className="text-[11px] font-medium leading-tight truncate">{e.title}</div>
+                        <div className="event-title text-[11px] font-semibold leading-tight truncate">{e.title}</div>
                         {h > 30 ? <div className="text-[10px] text-muted leading-tight truncate">{clockRange(new Date(e.start), new Date(e.end))}</div> : null}
                       </button>
                     );
@@ -390,7 +390,7 @@ function TimeGrid({ days, data }: { days: Date[]; data: CalData }) {
                       key={item.id}
                       type="button"
                       onClick={() => select({ kind: "task", id: item.task.id })}
-                      className={`absolute text-left overflow-hidden rounded-md px-1.5 py-0.5 bg-surface border border-dashed border-accent hover:bg-surface-2 ${item.task.done ? "opacity-50" : ""}`}
+                      className={`absolute flex flex-col justify-start text-left overflow-hidden rounded-lg px-1.5 py-1 bg-surface border border-dashed border-accent/70 hover:bg-surface-2 ${item.task.done ? "opacity-50" : ""}`}
                       style={{ ...style, ...courseStyle(course?.color) }}
                       title={`Work on ${item.task.title} · ${duration(item.block.minutes)}`}
                     >

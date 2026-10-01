@@ -83,10 +83,11 @@ function CourseCard({ course }: { course: Course }) {
   const pct = stats.total ? Math.round((stats.done / stats.total) * 100) : 0;
 
   return (
-    <section className={`course-item card p-4 pl-5 flex flex-col ${course.hidden ? "opacity-70" : ""}`} style={courseStyle(course.color)}>
+    <section className={`card p-4 sm:p-5 flex flex-col ${course.hidden ? "opacity-70" : ""}`} style={courseStyle(course.color)}>
       <div className="flex items-start gap-2">
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2 min-w-0">
+            <span className="w-2.5 h-2.5 rounded-full shrink-0 course-bar" aria-hidden />
             <h2 className="font-semibold text-[0.95rem] truncate" title={course.title}>
               {course.title}
             </h2>

@@ -298,12 +298,12 @@ function EventRow({ item }: { item: Extract<ScheduleItem, { kind: "event" }> }) 
     <button
       type="button"
       onClick={() => select({ kind: "event", id: e.id })}
-      className="course-item w-full text-left rounded-xl border border-line bg-surface-2/70 pr-3 py-2"
+      className="event-block w-full text-left px-3 py-2"
       style={courseStyle(e.color)}
     >
-      <div className="text-sm font-medium truncate">{e.title}</div>
+      <div className="event-title text-sm font-semibold truncate">{e.title}</div>
       <div className="text-xs text-muted flex items-center gap-1.5 min-w-0">
-        {details.length ? <span className="course-text font-medium truncate">{details.join(" · ")}</span> : null}
+        {details.length ? <span className="truncate">{details.join(" · ")}</span> : null}
         {e.location ? (
           <span className="inline-flex items-center gap-0.5 truncate">
             <MapPin size={11} className="shrink-0" />
@@ -348,7 +348,7 @@ function WorkRow({ work }: { work: PlannedWork }) {
   const late = due ? due.getTime() < now.getTime() : false;
   return (
     <li
-      className="course-item flex items-center gap-2.5 sm:gap-3 rounded-lg border border-line bg-surface pr-2.5 sm:pr-3 py-2 cursor-pointer"
+      className="task-card flex items-center gap-2.5 sm:gap-3 px-2.5 sm:px-3 py-2 cursor-pointer"
       style={courseStyle(course?.color ?? "var(--accent)")}
       onClick={() => select({ kind: "task", id: task.id })}
     >
@@ -356,7 +356,12 @@ function WorkRow({ work }: { work: PlannedWork }) {
       <div className="min-w-0 flex-1">
         <div className="text-sm font-medium leading-snug line-clamp-2">{task.title}</div>
         <div className="mt-0.5 text-xs text-muted flex items-center gap-x-1.5 flex-wrap">
-          {course ? <span className="course-text font-medium">{course.code}</span> : null}
+          {course ? (
+            <span className="inline-flex items-center gap-1.5 course-text font-medium">
+              <span className="course-dot" />
+              {course.code}
+            </span>
+          ) : null}
           {due ? <span className={late ? "text-danger" : ""}>{dueIn(due, now)}</span> : null}
           {block.parts > 1 ? <span className="text-faint">part {block.part} of {block.parts}</span> : null}
         </div>

@@ -260,42 +260,48 @@
   }
 
   /*
-   * A tile that belongs to a course: a solid colour edge running the full height
-   * and following the tile's own corner radius. It is a pseudo-element clipped by
-   * the tile rather than an inset line, so it meets the top and bottom cleanly.
-   *
-   * The tile itself stays neutral. Filling it with the course colour would put a
-   * red or amber wash behind ordinary rows, which reads as a warning and competes
-   * with the red already used for overdue work. Colour arrives on hover instead.
+   * Something on the calendar, in its class or calendar colour: a soft fill of
+   * that colour with a hairline border of the same hue and a title tinted to
+   * match. Set --c inline.
    */
-  .course-item {
-    position: relative;
-    overflow: hidden;
-    padding-left: 1rem;
-    transition:
-      background 140ms ease,
-      border-color 140ms ease,
-      box-shadow 140ms ease;
-  }
-  .course-item::before {
-    content: "";
-    position: absolute;
-    inset-block: 0;
-    left: 0;
-    width: 4px;
-    background: var(--c);
-  }
-  .course-item:hover {
-    background: color-mix(in oklab, var(--c) 5%, var(--surface));
-    border-color: color-mix(in oklab, var(--c) 35%, var(--line));
-  }
-  [data-theme="dark"] .course-item:hover {
+  .event-block {
     background: color-mix(in oklab, var(--c) 12%, var(--surface));
-    border-color: color-mix(in oklab, var(--c) 42%, var(--line));
+    border: 1px solid color-mix(in oklab, var(--c) 24%, transparent);
+    border-radius: 10px;
+    transition:
+      background 120ms ease,
+      border-color 120ms ease;
   }
-  /* A finished item recedes: drain the edge rather than only fading the text. */
-  .course-item.row-done::before {
-    opacity: 0.3;
+  .event-block:hover {
+    background: color-mix(in oklab, var(--c) 18%, var(--surface));
+    border-color: color-mix(in oklab, var(--c) 38%, transparent);
+  }
+  .event-title {
+    color: color-mix(in oklab, var(--c) 60%, var(--fg));
+  }
+  [data-theme="dark"] .event-block {
+    background: color-mix(in oklab, var(--c) 20%, var(--surface));
+    border-color: color-mix(in oklab, var(--c) 32%, transparent);
+  }
+  [data-theme="dark"] .event-block:hover {
+    background: color-mix(in oklab, var(--c) 27%, var(--surface));
+  }
+  [data-theme="dark"] .event-title {
+    color: color-mix(in oklab, var(--c) 35%, white);
+  }
+
+  /* A piece of work: a plain card. Its class shows as a coloured dot beside the class code. */
+  .task-card {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    transition:
+      border-color 120ms ease,
+      box-shadow 120ms ease;
+  }
+  .task-card:hover {
+    border-color: var(--line-strong);
+    box-shadow: 0 1px 3px rgb(0 0 0 / 0.06);
   }
 
   .course-tint {
