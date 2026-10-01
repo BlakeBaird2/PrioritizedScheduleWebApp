@@ -1,18 +1,23 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import { ChevronDown, ExternalLink, EyeOff, Pencil, Plus } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { ExternalLink, Eye, Pencil, Plus, X } from "lucide-react";
 import { COURSE_COLORS } from "@/lib/model";
 import type { Course, CourseEdit, Task } from "@/lib/types";
-import { applyFilters, duration, plural, relativeDue, typeIconClass, typeMeta } from "@/lib/ui";
+import { duration, relativeDue, typeIconClass, typeMeta, whenLabel } from "@/lib/ui";
 import { courseStyle, useApp } from "./context";
 import { Switch } from "./ScheduleSettings";
-import { TaskRow } from "./TaskRow";
+import { DoneToggle } from "./TaskRow";
 import { ClassTimesSummary, useClassTimes } from "./ClassTimes";
 
+/**
+ * Every class side by side, one column each, like the days of the week view:
+ * the class at the top, then its work in the order it's due.
+ */
 export function ClassesView() {
-  const { model } = useApp();
-  const [showHidden, setShowHidden] = useState(false);
+  const { model, update } = useApp();
+  const [editing, setEditing] = useState<Course | null>(null);
+  const visible = model.visibleCourses;
   const hidden = model.courses.filter((c) => c.hidden);
 
   if (model.courses.length === 0) {
@@ -25,140 +30,144 @@ export function ClassesView() {
   }
 
   return (
-    <div className="space-y-4">
-      <div className="grid gap-3 md:grid-cols-2">
-        {model.visibleCourses.map((c) => (
-          <CourseCard key={c.id} course={c} />
-        ))}
-      </div>
-      {hidden.length > 0 ? (
-        <section>
-          <button type="button" className="btn" onClick={() => setShowHidden((s) => !s)}>
-            <EyeOff size={14} />
-            {plural(hidden.length, "hidden class", "hidden classes")}
-            <ChevronDown size={14} className={showHidden ? "rotate-180 transition" : "transition"} />
-          </button>
-          {showHidden ? (
-            <div className="grid gap-3 md:grid-cols-2 mt-3">
-              {hidden.map((c) => (
-                <CourseCard key={c.id} course={c} />
-              ))}
-            </div>
-          ) : null}
-        </section>
+    <div className="space-y-3">
+      {visible.length > 0 ? (
+        <div className="card overflow-x-auto scrollbar-thin snap-x snap-mandatory">
+          <div className="grid divide-x divide-line" style={{ gridTemplateColumns: `repeat(${visible.length}, minmax(13.5rem, 1fr))` }}>
+            {visible.map((c) => (
+              <ClassColumn key={c.id} course={c} onEdit={() => setEditing(c)} />
+            ))}
+          </div>
+        </div>
       ) : null}
+
+      {hidden.length > 0 ? (
+        <div className="flex items-center gap-2 flex-wrap text-sm text-muted">
+          <span>Hidden:</span>
+          {hidden.map((c) => (
+            <button
+              key={c.id}
+              type="button"
+              className="pill pill-course"
+              aria-pressed={true}
+              style={courseStyle(c.color)}
+              title="Show this class again"
+              onClick={() => update((w) => ({ ...w, courseEdits: { ...w.courseEdits, [c.id]: { ...w.courseEdits[c.id], hidden: undefined } } }))}
+            >
+              <span className="course-dot" />
+              <span className="course-text">{c.code}</span>
+              <Eye size={12} className="text-faint" />
+            </button>
+          ))}
+        </div>
+      ) : null}
+
+      {editing ? <ClassEditDialog course={editing} onClose={() => setEditing(null)} /> : null}
     </div>
   );
 }
 
-const PAGE = 5;
+const PAGE = 8;
 
-function CourseCard({ course }: { course: Course }) {
-  const { model, now, filters, snapshot } = useApp();
+function ClassColumn({ course, onEdit }: { course: Course; onEdit: () => void }) {
+  const { model, now } = useApp();
   const [expanded, setExpanded] = useState(false);
-  const [editing, setEditing] = useState(false);
   const feed = model.feedById.get(course.feedId);
 
   const stats = useMemo(() => {
     const all = model.tasks.filter((t) => t.courseId === course.id);
-    const inView = applyFilters(all, { ...filters, courses: null });
-    const overdue: Task[] = [];
-    const ahead: Task[] = [];
-    for (const t of inView) {
-      const due = t.dueAt ? Date.parse(t.dueAt) : null;
-      if (due !== null && due < now.getTime() && !t.done) {
-        if (due > now.getTime() - 30 * 86_400_000) overdue.push(t);
-      } else if (due === null || due >= now.getTime() - 86_400_000) ahead.push(t);
-    }
-    const done = all.filter((t) => t.done).length;
-    const workLeft = [...overdue, ...ahead].filter((t) => !t.done).reduce((s, t) => s + t.estimate, 0);
-    const types = new Map<Task["type"], number>();
-    for (const t of all) types.set(t.type, (types.get(t.type) ?? 0) + 1);
-    return { overdue, ahead, done, total: all.length, workLeft, types: [...types.entries()].sort((a, b) => b[1] - a[1]) };
-  }, [model.tasks, course.id, filters, now]);
+    const t = now.getTime();
+    // Late work from the last month first, then everything still to come.
+    const late = all.filter((x) => !x.done && x.dueAt && Date.parse(x.dueAt) < t && Date.parse(x.dueAt) > t - 30 * 86_400_000);
+    const ahead = all.filter((x) => !x.done && (!x.dueAt || Date.parse(x.dueAt) >= t));
+    const done = all.filter((x) => x.done).length;
+    const left = [...late, ...ahead];
+    return { left, done, total: all.length, minutes: left.reduce((sum, x) => sum + x.estimate, 0) };
+  }, [model.tasks, course.id, now]);
 
-  const original = snapshot.feeds[course.feedId]?.result?.courses.find((c) => `${course.feedId}:${c.key}` === course.id);
-  const next = stats.ahead.find((t) => !t.done && t.dueAt);
-  const shown = expanded ? stats.ahead : stats.ahead.slice(0, PAGE);
   const pct = stats.total ? Math.round((stats.done / stats.total) * 100) : 0;
+  const shown = expanded ? stats.left : stats.left.slice(0, PAGE);
 
   return (
-    <section className={`card p-4 sm:p-5 flex flex-col ${course.hidden ? "opacity-70" : ""}`} style={courseStyle(course.color)}>
-      <div className="flex items-start gap-2">
-        <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-2 min-w-0">
-            <span className="w-2.5 h-2.5 rounded-full shrink-0 course-bar" aria-hidden />
-            <h2 className="font-semibold text-[0.95rem] truncate" title={course.title}>
-              {course.title}
-            </h2>
-            {course.code !== course.title ? (
-              <span className="course-chip rounded-md px-1.5 py-0.5 text-[10px] font-semibold tracking-wide shrink-0">{course.code}</span>
+    <section className="min-w-0 flex flex-col snap-start" style={courseStyle(course.color)}>
+      <header className="px-3 pt-3 pb-2.5 border-b border-line bg-surface-2/40">
+        <div className="flex items-center gap-1.5 min-w-0">
+          <span className="course-dot" />
+          <h2 className="course-text font-semibold text-[0.9375rem] truncate" title={course.title}>
+            {course.code}
+          </h2>
+          <div className="ml-auto flex items-center shrink-0">
+            {course.url ? (
+              <a href={course.url} target="_blank" rel="noreferrer" className="p-1 text-faint hover:text-fg" title={`Open in ${feed?.name ?? "the class site"}`} aria-label={`Open ${course.code}`}>
+                <ExternalLink size={14} />
+              </a>
             ) : null}
-          </div>
-          <p className="text-xs text-muted truncate">from {feed?.name ?? "a calendar"}</p>
-          <div className="mt-1.5">
-            <MeetsLine course={course} />
+            <button type="button" className="p-1 text-faint hover:text-fg" onClick={onEdit} title="Rename, recolour or hide" aria-label={`Edit ${course.code}`}>
+              <Pencil size={14} />
+            </button>
           </div>
         </div>
-        {course.url ? (
-          <a href={course.url} target="_blank" rel="noreferrer" className="btn btn-icon" title="Open the class site" aria-label={`Open ${course.code}`}>
-            <ExternalLink size={14} />
-          </a>
-        ) : null}
-        <button type="button" className="btn btn-icon" onClick={() => setEditing((e) => !e)} aria-label={`Edit ${course.code}`} title="Rename, recolour or hide">
-          <Pencil size={14} />
-        </button>
-      </div>
-
-      {editing ? <CourseEditor course={course} original={original} onDone={() => setEditing(false)} /> : null}
-
-      <div className="mt-3 flex items-baseline gap-2 text-xs flex-wrap">
-        {stats.overdue.length > 0 ? <span className="text-danger font-medium">{stats.overdue.length} overdue</span> : null}
-        <span className="text-muted">{plural(stats.ahead.filter((t) => !t.done).length, "item")} ahead</span>
-        {stats.workLeft > 0 ? <span className="text-muted">· about {duration(stats.workLeft)} of work</span> : null}
-        <span className="ml-auto text-faint tabular-nums">
-          {stats.done}/{stats.total} done
-        </span>
-      </div>
-      <div className="mt-1.5 h-1 rounded-full bg-surface-2 overflow-hidden">
-        <div className="h-full rounded-full course-bar opacity-80 transition-[width] duration-500" style={{ width: `${pct}%` }} />
-      </div>
-
-      {next?.dueAt ? (
-        <div className="mt-3 text-xs text-muted">
-          Next up: <span className="text-fg font-medium">{next.title}</span> <span className="text-faint">· {relativeDue(new Date(next.dueAt), now)}</span>
+        <p className="text-xs text-muted truncate" title={course.title}>
+          {course.title !== course.code ? course.title : `from ${feed?.name ?? "a calendar"}`}
+        </p>
+        {/* Room for two lines, so every column's work starts at the same height. */}
+        <div className="mt-1.5 min-h-[2.125rem]">
+          <MeetsLine course={course} />
         </div>
-      ) : null}
+        <div className="mt-2.5 h-1 rounded-full bg-surface-2 overflow-hidden">
+          <div className="h-full rounded-full course-bar transition-[width] duration-500" style={{ width: `${pct}%` }} />
+        </div>
+        <div className="mt-1 flex items-center text-[11px] text-muted tabular-nums">
+          <span>
+            {stats.left.length} left{stats.minutes ? ` · about ${duration(stats.minutes)}` : ""}
+          </span>
+          <span className="ml-auto">
+            {stats.done}/{stats.total} done
+          </span>
+        </div>
+      </header>
 
-      <div className="mt-3 space-y-1.5">
-        {stats.overdue.map((t) => (
-          <TaskRow key={t.id} task={t} showDate hideCourse />
-        ))}
+      <ul className="p-2 space-y-1.5 flex-1">
         {shown.map((t) => (
-          <TaskRow key={t.id} task={t} showDate hideCourse />
+          <ClassItem key={t.id} task={t} />
         ))}
-        {stats.ahead.length === 0 && stats.overdue.length === 0 ? <p className="text-sm text-muted py-2">Nothing left in view for this class.</p> : null}
-      </div>
-      {stats.ahead.length > PAGE ? (
-        <button type="button" className="btn mt-2.5 self-start" onClick={() => setExpanded((e) => !e)}>
-          {expanded ? "Show less" : `Show ${stats.ahead.length - PAGE} more`}
+        {stats.left.length === 0 ? <li className="px-1 py-3 text-xs text-muted text-center">All caught up</li> : null}
+      </ul>
+      {stats.left.length > PAGE ? (
+        <button type="button" className="mx-2 mb-2 text-xs text-muted hover:text-fg rounded-lg py-1.5 hover:bg-surface-2 transition" onClick={() => setExpanded((e) => !e)}>
+          {expanded ? "Show less" : `${stats.left.length - PAGE} more`}
         </button>
-      ) : null}
-
-      {stats.types.length > 0 ? (
-        <div className="mt-3 pt-3 border-t border-line flex flex-wrap gap-x-3 gap-y-1">
-          {stats.types.map(([t, n]) => {
-            const meta = typeMeta(t);
-            return (
-              <span key={t} className="inline-flex items-center gap-1 text-[11px] text-muted">
-                <meta.icon size={11} className={typeIconClass(t)} />
-                {n} {n === 1 ? meta.label.toLowerCase() : meta.plural.toLowerCase()}
-              </span>
-            );
-          })}
-        </div>
       ) : null}
     </section>
+  );
+}
+
+function ClassItem({ task }: { task: Task }) {
+  const { select, now } = useApp();
+  const due = task.dueAt ? new Date(task.dueAt) : null;
+  const late = due ? due.getTime() < now.getTime() : false;
+  const meta = typeMeta(task.type);
+  return (
+    <li
+      role="button"
+      tabIndex={0}
+      onClick={() => select({ kind: "task", id: task.id })}
+      onKeyDown={(e) => {
+        if (e.key === "Enter") select({ kind: "task", id: task.id });
+      }}
+      className="task-card flex items-start gap-2 px-2 py-1.5 cursor-pointer"
+    >
+      <span className="pt-px">
+        <DoneToggle task={task} size="sm" />
+      </span>
+      <div className="min-w-0 flex-1">
+        <div className="text-[13px] font-medium leading-snug line-clamp-2">{task.title}</div>
+        <div className="mt-0.5 flex items-center gap-1 text-[11px] text-muted">
+          {meta.loud ? <meta.icon size={11} className={typeIconClass(task.type)} strokeWidth={2.5} /> : null}
+          <span className={late ? "text-danger font-medium" : ""}>{due ? (late ? relativeDue(due, now) : whenLabel(due, now, !task.allDay)) : "No due date"}</span>
+        </div>
+      </div>
+    </li>
   );
 }
 
@@ -177,6 +186,33 @@ function MeetsLine({ course }: { course: Course }) {
       <Plus size={12} />
       Add class times
     </button>
+  );
+}
+
+function ClassEditDialog({ course, onClose }: { course: Course; onClose: () => void }) {
+  const { snapshot } = useApp();
+  const original = snapshot.feeds[course.feedId]?.result?.courses.find((c) => `${course.feedId}:${c.key}` === course.id);
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [onClose]);
+  return (
+    <>
+      <div className="fixed inset-0 bg-black/30 z-50 fade-in" onClick={onClose} aria-hidden />
+      <div role="dialog" aria-modal="true" aria-label={`Edit ${course.code}`} className="fixed z-50 inset-x-4 top-[12vh] mx-auto max-w-md card p-5 fade-in" style={courseStyle(course.color)}>
+        <div className="flex items-center gap-2 mb-4">
+          <span className="course-dot" />
+          <h2 className="text-base font-semibold flex-1">Edit {course.code}</h2>
+          <button type="button" className="btn btn-icon" onClick={onClose} aria-label="Close">
+            <X size={16} />
+          </button>
+        </div>
+        <CourseEditor course={course} original={original} onDone={onClose} />
+      </div>
+    </>
   );
 }
 
@@ -208,7 +244,7 @@ function CourseEditor({ course, original, onDone }: { course: Course; original?:
   };
 
   return (
-    <form onSubmit={save} className="mt-3 rounded-xl border border-line bg-surface-2/50 p-3 space-y-3">
+    <form onSubmit={save} className="space-y-3">
       <div className="grid grid-cols-[7rem_1fr] gap-2">
         <label className="text-xs text-muted">
           Short name

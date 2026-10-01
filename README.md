@@ -20,8 +20,10 @@ it and start.
 - **Calendar** — month, week and day. Week and day are time grids showing your
   classes, your personal events and your planned work side by side.
 - **Upcoming** — everything due, by day, with where it sits in the plan.
-- **Classes** — one card per class, created automatically from your calendars,
-  with when it meets. Rename, recolour or hide any of them.
+- **Classes** — every class side by side in one board, like the days of the
+  week view: when it meets, how much is left, and its work in due order.
+  Classes are created automatically from your calendars; rename, recolour or
+  hide any of them.
 - **Class times** — class calendars list what's due, rarely when class is. Add
   each class's days and times once (during setup, in Settings, or from the
   prompt on the Plan screen) and they show on your calendar in the class's

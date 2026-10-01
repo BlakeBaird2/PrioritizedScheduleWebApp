@@ -290,18 +290,43 @@
     color: color-mix(in oklab, var(--c) 35%, white);
   }
 
-  /* A piece of work: a plain card. Its class shows as a coloured dot beside the class code. */
+  /*
+   * A piece of work, always washed in its class colour so classes are easy to
+   * tell apart at a glance. Lighter than an event, which is time already taken.
+   */
   .task-card {
-    background: var(--surface);
-    border: 1px solid var(--line);
+    background: color-mix(in oklab, var(--c) 8%, var(--surface));
+    border: 1px solid color-mix(in oklab, var(--c) 24%, var(--line));
     border-radius: 12px;
     transition:
+      background 120ms ease,
       border-color 120ms ease,
       box-shadow 120ms ease;
   }
   .task-card:hover {
-    border-color: var(--line-strong);
+    background: color-mix(in oklab, var(--c) 13%, var(--surface));
+    border-color: color-mix(in oklab, var(--c) 40%, var(--line));
     box-shadow: 0 1px 3px rgb(0 0 0 / 0.06);
+  }
+  [data-theme="dark"] .task-card {
+    background: color-mix(in oklab, var(--c) 13%, var(--surface));
+    border-color: color-mix(in oklab, var(--c) 28%, var(--line));
+  }
+  [data-theme="dark"] .task-card:hover {
+    background: color-mix(in oklab, var(--c) 19%, var(--surface));
+  }
+
+  /* Planned work on the calendar: its class colour, with a dashed edge because it isn't fixed. */
+  .plan-block {
+    background: color-mix(in oklab, var(--c) 6%, var(--surface));
+    border: 1.5px dashed color-mix(in oklab, var(--c) 55%, var(--line));
+    transition: background 120ms ease;
+  }
+  .plan-block:hover {
+    background: color-mix(in oklab, var(--c) 12%, var(--surface));
+  }
+  [data-theme="dark"] .plan-block {
+    background: color-mix(in oklab, var(--c) 10%, var(--surface));
   }
 
   .course-tint {

@@ -113,7 +113,7 @@ export function CalendarView() {
               <span className="w-3 h-3 event-block !rounded-[4px]" style={courseStyle("#64748b")} /> Events
             </span>
             <span className="inline-flex items-center gap-1.5">
-              <span className="w-3 h-3 rounded-[4px] border border-dashed border-accent" /> Planned work
+              <span className="w-3 h-3 rounded-[4px] plan-block" style={courseStyle("#64748b")} /> Planned work
             </span>
           </>
         ) : (
@@ -390,11 +390,11 @@ function TimeGrid({ days, data }: { days: Date[]; data: CalData }) {
                       key={item.id}
                       type="button"
                       onClick={() => select({ kind: "task", id: item.task.id })}
-                      className={`absolute flex flex-col justify-start text-left overflow-hidden rounded-lg px-1.5 py-1 bg-surface border border-dashed border-accent/70 hover:bg-surface-2 ${item.task.done ? "opacity-50" : ""}`}
+                      className={`plan-block absolute flex flex-col justify-start text-left overflow-hidden rounded-lg px-1.5 py-1 ${item.task.done ? "opacity-50" : ""}`}
                       style={{ ...style, ...courseStyle(course?.color) }}
                       title={`Work on ${item.task.title} · ${duration(item.block.minutes)}`}
                     >
-                      <div className="text-[11px] font-semibold leading-tight truncate text-accent">{item.task.title}</div>
+                      <div className="event-title text-[11px] font-semibold leading-tight truncate">{item.task.title}</div>
                       {h > 30 ? (
                         <div className="text-[10px] text-muted leading-tight truncate">
                           {course ? <span className="course-text">{course.code} · </span> : null}

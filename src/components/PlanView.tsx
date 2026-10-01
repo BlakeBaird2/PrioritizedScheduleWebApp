@@ -455,7 +455,7 @@ function DueSoon() {
             return (
               <div key={g.label}>
                 <div className={`section-title mb-1.5 ${g.late ? "!text-danger" : ""}`}>{g.label}</div>
-                <ul className="space-y-1">
+                <ul className="space-y-1.5">
                   {tasks.map((t) => (
                     <DueItem key={t.id} task={t} />
                   ))}
@@ -480,11 +480,11 @@ function DueItem({ task }: { task: Task }) {
   const due = new Date(task.dueAt!);
   const late = due.getTime() < now.getTime();
   return (
-    <li className="flex items-start gap-2.5 rounded-lg px-1.5 py-1.5 hover:bg-surface-2 transition cursor-pointer" onClick={() => select({ kind: "task", id: task.id })}>
+    <li className="task-card flex items-start gap-2.5 px-2.5 py-2 cursor-pointer" style={courseStyle(course?.color)} onClick={() => select({ kind: "task", id: task.id })}>
       <span className="pt-0.5">
         <DoneToggle task={task} size="sm" />
       </span>
-      <div className="min-w-0 flex-1" style={courseStyle(course?.color)}>
+      <div className="min-w-0 flex-1">
         <div className="text-sm font-medium leading-snug">{task.title}</div>
         <div className="mt-0.5 flex items-center gap-x-2 gap-y-0.5 flex-wrap text-xs text-muted">
           {course ? <span className="course-text font-medium">{course.code}</span> : null}
