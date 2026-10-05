@@ -20,10 +20,10 @@ export const viewport: Viewport = {
 // Applies the saved theme before first paint so there is no flash.
 const themeScript = `(function(){try{var t=localStorage.getItem('prio:theme');if(t!=='light'&&t!=='dark'){t=window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'}document.documentElement.setAttribute('data-theme',t)}catch(e){document.documentElement.setAttribute('data-theme','light')}})();`;
 
-// The home page is for newcomers. Opening it in a browser that already has calendars
+// The home page is for newcomers. Opening "/" in a browser that already has calendars
 // goes straight to the plan before anything is drawn, and a setup link made before
-// the app moved to /app still lands there. Only full page loads of "/" run this, so a
-// link to the home page from inside the app still shows it.
+// the app moved to /app still lands there. The same page at /about never skips ahead,
+// which is where Settings → About Prio leads.
 const homeScript = `(function(){try{if(location.pathname!=='/')return;var h=location.hash;if(h.indexOf('#setup=')===0){location.replace('/app'+h);return}var w=JSON.parse(localStorage.getItem('prio:ws')||'null');if(w&&w.feeds&&w.feeds.length)location.replace('/app')}catch(e){}})();`;
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

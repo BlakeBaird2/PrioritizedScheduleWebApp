@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { Copy, RotateCcw, Sparkles } from "lucide-react";
+import Link from "next/link";
+import { Copy, Info, RotateCcw, Sparkles } from "lucide-react";
 import { encodeSetup } from "@/lib/workspace";
 import { ASSIGNMENT_TYPES, type AssignmentType } from "@/lib/types";
 import { duration, typeIconClass, typeMeta } from "@/lib/ui";
@@ -134,6 +135,13 @@ export function SettingsView() {
           </button>
         </Section>
       ) : null}
+
+      <Section title="About Prio" hint="The home page explains how Prio plans your time and where to find the link for each calendar.">
+        <Link href="/about" className="btn">
+          <Info size={15} />
+          Open the home page
+        </Link>
+      </Section>
 
       <Section title="Start over" hint="Removes your calendars and everything you've set from this browser. Nothing is stored anywhere else.">
         <button
