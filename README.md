@@ -18,6 +18,8 @@ it and start.
   It is rendered on the server, so it shows up at once and search engines can
   read it. Anyone who already has calendars in their browser skips it and goes
   straight to their plan.
+- **`/about`** — the same home page, for people who already use Prio. It never
+  skips ahead to the app; Settings → **About Prio** links to it.
 - **`/app`** — Prio itself. `/app#demo` opens it with sample data, unless that
   browser already has calendars of its own.
 

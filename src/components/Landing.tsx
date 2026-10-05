@@ -67,9 +67,9 @@ function Nav() {
   return (
     <header className="sticky top-0 z-30 border-b border-line/70 bg-bg/80 backdrop-blur-md">
       <div className={`${WRAP} flex h-14 items-center gap-8`}>
-        <Link href="/" className="wordmark text-xl select-none" aria-label="Prio home page">
+        <a href="#top" className="wordmark text-xl select-none" aria-label="Prio, back to top">
           Prio<span className="text-accent">.</span>
-        </Link>
+        </a>
         <nav aria-label="On this page" className="hidden items-center gap-7 text-sm text-muted md:flex">
           <a href="#how-it-works" className="transition-colors hover:text-fg">
             How it works
