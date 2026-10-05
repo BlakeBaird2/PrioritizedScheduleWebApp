@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { ArrowLeft, ArrowRight, Lock, Sparkles } from "lucide-react";
 import { feedIdFor } from "@/lib/feeds/url";
 import { defaultWorkspace, PERSONAL_COLORS } from "@/lib/workspace";
@@ -54,9 +55,9 @@ export function Onboarding({ onFinish }: { onFinish: () => void }) {
   return (
     <div className="min-h-dvh px-4 py-10 sm:py-16">
       <div className="max-w-xl mx-auto">
-        <div className="wordmark text-3xl select-none">
+        <Link href="/" className="wordmark inline-block text-3xl select-none" aria-label="Prio home page">
           Prio<span className="text-accent">.</span>
-        </div>
+        </Link>
         <p className="mt-2 text-[1.0625rem] text-muted leading-relaxed">
           Your classes, work and life on one calendar, and a plan for exactly what to work on in every free gap.
         </p>
@@ -74,7 +75,7 @@ export function Onboarding({ onFinish }: { onFinish: () => void }) {
               <h1 className="text-lg font-semibold">Add your calendars</h1>
               <p className="mt-1 text-sm text-muted leading-relaxed">
                 Start with your school calendar from Canvas, Learning Suite or any course site. Prio finds your classes and assignments on its own. Then add
-                personal calendars (Google, Outlook, Apple) so it knows when you&apos;re busy.
+                your work and personal calendars (Google, Outlook, Apple) so it knows when you&apos;re busy.
               </p>
             </div>
             <FeedAdder autoFocus />
