@@ -144,6 +144,14 @@
     cursor: default;
     filter: none;
   }
+  /* The home page's calls to action. Pair with .btn or .btn-primary. */
+  .btn-lg {
+    justify-content: center;
+    gap: 0.5rem;
+    border-radius: 12px;
+    padding: 0.75rem 1.25rem;
+    font-size: 1rem;
+  }
 
   .input {
     width: 100%;
@@ -477,6 +485,43 @@
 }
 .fade-in {
   animation: fade-in 160ms ease-out;
+}
+
+/* ---------------------------------------------------------------------------
+ * Home page
+ * ------------------------------------------------------------------------- */
+
+/* A soft wash of the accent colour behind the hero and the closing call to action. */
+.landing-glow {
+  background: radial-gradient(60% 55% at 50% 0%, color-mix(in oklab, var(--accent) 13%, transparent), transparent 72%);
+}
+
+/* Planned work settles into its free time, one piece after another. Set --delay inline. */
+@keyframes landing-settle {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.landing-settle {
+  animation: landing-settle 520ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
+  animation-delay: var(--delay, 0ms);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  /* Links to sections of the home page glide rather than jump. */
+  html:has([data-landing]) {
+    scroll-behavior: smooth;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .landing-settle {
+    animation: none;
+  }
 }
 
 .skeleton {

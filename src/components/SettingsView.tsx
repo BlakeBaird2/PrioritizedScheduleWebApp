@@ -29,7 +29,7 @@ export function SettingsView() {
   const [helpOpen, setHelpOpen] = useState(false);
 
   const copySetup = async () => {
-    const link = `${window.location.origin}/#setup=${encodeSetup(ws)}`;
+    const link = `${window.location.origin}/app#setup=${encodeSetup(ws)}`;
     try {
       await navigator.clipboard.writeText(link);
       setCopied(true);

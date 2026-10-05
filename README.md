@@ -10,6 +10,17 @@ and fills that time with the work that is due soonest.
 No accounts, no database, no API keys, no environment variables. Anyone can open
 it and start.
 
+## Pages
+
+- **`/`** — the home page for newcomers: what Prio does, how the plan is made,
+  and where to find the calendar link in each app (Canvas, Learning Suite,
+  Google, Outlook, Apple, scheduling apps), grouped by school, work and personal.
+  It is rendered on the server, so it shows up at once and search engines can
+  read it. Anyone who already has calendars in their browser skips it and goes
+  straight to their plan.
+- **`/app`** — Prio itself. `/app#demo` opens it with sample data, unless that
+  browser already has calendars of its own.
+
 ## What it does
 
 - **Plan** — the home screen, built to answer three questions at a glance:
@@ -123,13 +134,13 @@ submitted, which is why you tick things off yourself.
 
 ```bash
 npm install
-npm run dev        # http://localhost:3000
+npm run dev        # http://localhost:3000 (the app itself is at /app)
 npm test           # parser, planner, workspace and timeline tests
 npm run lint
 ```
 
-No configuration is needed. Pick **Try sample data** on the first screen to see
-it working without any calendars.
+No configuration is needed. Pick **Try it with sample data** on the home page to
+see it working without any calendars.
 
 `npm run dev` accepts links whose site resolves to a private network address
 (common on campus Wi-Fi and VPNs). A production build refuses them unless started
@@ -153,6 +164,8 @@ docker run -p 3000:3000 prio
 ## Project layout
 
 ```
+src/app/page.tsx            the home page (src/components/Landing*.tsx, LinkGuide.tsx)
+src/app/app/page.tsx        the app
 src/app/api/feed/route.ts   the only server endpoint: read one calendar link
 src/lib/feeds/              link checks, provider detection, the iCal parser, sample data
 src/lib/server/fetchFeed.ts safe fetching of user-supplied links
