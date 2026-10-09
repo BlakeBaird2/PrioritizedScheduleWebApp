@@ -1,12 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import { CircleAlert, Eye, EyeOff, Link as LinkIcon, Pencil, Trash } from "lucide-react";
+import { CircleAlert, Eye, EyeOff, Link as LinkIcon, Pencil, Plus, Trash } from "lucide-react";
 import { feedIdFor, normalizeFeedUrl, PROVIDER_LABEL } from "@/lib/feeds/url";
 import { fetchFeedFromApi } from "@/lib/sync";
 import type { FeedConfig, FeedResult, FeedRole, Provider } from "@/lib/types";
 import { plural, timeAgo } from "@/lib/ui";
-import { courseStyle, useApp } from "./context";
+import { courseStyle, useApp, wireGray } from "./context";
 import { LINK_HELP } from "./calendarGuide";
 
 /** What a calendar contributed, in a few words. */
@@ -23,8 +23,12 @@ export function feedSummary(result: FeedResult | null | undefined, role: FeedRol
   return parts.join(" · ");
 }
 
-/** Paste a link, and it is read, sorted into classes, and added in one step. */
-export function FeedAdder({ autoFocus = false }: { autoFocus?: boolean }) {
+/**
+ * Paste a link, and it is read, sorted into classes, and added in one step.
+ * `primary` draws Add as the screen's main action; turn it off where something
+ * else on screen is the main action.
+ */
+export function FeedAdder({ autoFocus = false, primary = true }: { autoFocus?: boolean; primary?: boolean }) {
   const { ws, addFeed, timezone } = useApp();
   const [value, setValue] = useState("");
   const [busy, setBusy] = useState(false);
@@ -86,8 +90,9 @@ export function FeedAdder({ autoFocus = false }: { autoFocus?: boolean }) {
             disabled={busy}
           />
         </label>
-        <button type="submit" className="btn-primary shrink-0" disabled={busy || !value.trim()}>
-          {busy ? "Reading…" : "Add"}
+        <button type="submit" className={`${primary ? "btn-primary" : "btn"} shrink-0`} disabled={busy || !value.trim()}>
+          <Plus size={16} strokeWidth={2.5} aria-hidden />
+          {busy ? "Reading…" : "Add calendar"}
         </button>
       </div>
       {error ? (
@@ -131,7 +136,7 @@ export function FeedList({ manage = false }: { manage?: boolean }) {
         return (
           <li key={feed.id} className={`rounded-xl border border-line bg-surface px-3 py-2.5 ${feed.enabled ? "" : "opacity-60"}`}>
             <div className="flex items-center gap-2.5 flex-wrap">
-              <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: feed.role === "personal" ? feed.color : "var(--accent)" }} />
+              <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: feed.role === "personal" ? wireGray(feed.color) : "var(--accent)" }} />
               <div className="min-w-0 flex-1">
                 <div className="text-sm font-medium truncate" title={feed.name}>
                   {feed.name}

@@ -4,6 +4,7 @@ import { CalendarRange, LayoutGrid, ListChecks, Moon, Plus, RefreshCw, Settings,
 import { timeAgo } from "@/lib/ui";
 import { useApp, type View } from "./context";
 import { ChangesPopover } from "./ChangesPopover";
+import { PrototypeBadge } from "./Prototype";
 import { useTheme } from "./store";
 
 const TABS: { id: View; label: string; icon: typeof ListChecks }[] = [
@@ -18,11 +19,12 @@ export function Header() {
   const { theme, toggle } = useTheme();
 
   return (
-    <header className="sticky top-0 z-30 bg-bg/85 backdrop-blur border-b border-line">
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 h-14 flex items-center gap-3">
+    <header className="sticky top-0 z-30 bg-bg border-b border-line-strong">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 h-14 flex items-center gap-2 sm:gap-3">
         <button type="button" onClick={() => setView("plan")} className="wordmark text-xl select-none" aria-label="Prio, go to your plan">
           Prio<span className="text-accent">.</span>
         </button>
+        <PrototypeBadge />
 
         <nav className="seg ml-2 hidden md:inline-flex" aria-label="View">
           {TABS.map((t) => (
@@ -34,14 +36,15 @@ export function Header() {
         </nav>
 
         <div className="ml-auto flex items-center gap-1.5">
-          <div className="hidden lg:block text-xs text-muted mr-1 tabular-nums" title={snapshot.at ? new Date(snapshot.at).toLocaleString() : undefined}>
+          <div className="hidden xl:block text-xs text-muted mr-1 tabular-nums" title={snapshot.at ? new Date(snapshot.at).toLocaleString() : undefined}>
             {syncing ? "Syncing…" : snapshot.at ? `Synced ${timeAgo(snapshot.at, now)}` : "Not synced yet"}
           </div>
           <button type="button" className="btn btn-icon" onClick={() => void sync()} disabled={syncing} title="Refresh calendars" aria-label="Refresh calendars">
             <RefreshCw size={16} className={syncing ? "spin" : undefined} />
           </button>
           <button type="button" className="btn btn-icon" onClick={openAddTask} title="Add a task" aria-label="Add a task">
-            <Plus size={16} />
+            <Plus size={16} strokeWidth={2.5} />
+            <span className="hidden lg:inline pr-0.5">Add task</span>
           </button>
           <ChangesPopover />
           <button type="button" className="btn btn-icon" onClick={toggle} title="Switch theme" aria-label="Switch theme">
@@ -57,6 +60,7 @@ export function Header() {
             style={view === "settings" ? { background: "var(--surface-2)", borderColor: "var(--line-strong)" } : undefined}
           >
             <Settings size={16} />
+            <span className="hidden lg:inline pr-0.5">Settings</span>
           </button>
         </div>
       </div>

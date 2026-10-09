@@ -144,6 +144,46 @@ npm run lint
 No configuration is needed. Pick **Try it with sample data** on the home page to
 see it working without any calendars.
 
+## Testing the entry states (prototype)
+
+Prio is currently styled as a **low-fidelity prototype**: greys and one accent
+colour, a sketch font, square outlined boxes, grey `[image: …]` placeholders.
+Every entry screen leads with the same sentence — *"See exactly what to work on
+in every free gap of your day."* — and has one primary (accent) button. The
+wireframe rules are at the end of `src/app/globals.css`; the shared pieces
+(`PrototypeNotice`, `PrototypeBadge`, `CapabilityHero`, `WirePlaceholder`) are in
+`src/components/Prototype.tsx`.
+
+What the browser stores decides which state you see (all in localStorage):
+
+| Key | Meaning |
+| --- | --- |
+| `prio:prototype-notice` | Set when the "early prototype" notice is dismissed. Missing = notice shows on the next page load. |
+| `prio:ws` | Calendars and choices. Calendars here + finished setup = returning user. |
+| `prio:ui` | Includes `setupDone`. |
+
+**Quickest way:** run `npm run dev`. A small **Dev: entry states** box sits in the
+bottom-left corner with one-click shortcuts to each state below. It only exists
+in development (`NODE_ENV=development`) and is not in production builds.
+
+**By hand** (works in any build; a private/incognito window is a clean first visit):
+
+| State | How to reach it | What to check |
+| --- | --- | --- |
+| First visit, prototype notice | New private window → `/` (or `/about`, `/app`, `/app#demo`) | Notice appears once; after **Got it** it doesn't return on refresh. **Prototype** tag in the header reopens it. |
+| Home `/` | Private window → `/` | Capability sentence is the biggest thing; **Start planning** is the only accent button. |
+| About `/about` | `/about` (never redirects) | Same, with **Open Prio** as the primary button. |
+| New user `/app` | Private window → `/app` | Onboarding: capability first; **Add calendar** is primary until a calendar is added, then **Continue**. |
+| Sample data `/app#demo` | Private window → `/app#demo` | Plan screen with the capability above the "Sample data" note; **Done** is primary. |
+| Returning user `/app` | After the demo (or real calendars), open `/app` again, or `/` (redirects to `/app`) | Plan screen, capability first, **Done** primary. |
+
+To start over without a private window, run this in the browser console, then
+reload: `Object.keys(localStorage).filter(k => k.startsWith("prio:")).forEach(k => localStorage.removeItem(k))`.
+Settings → Start over → **Remove everything** clears calendars and settings but keeps the theme and
+the prototype-notice dismissal.
+
+See [`FIVE_SECOND_TEST.md`](FIVE_SECOND_TEST.md) for the five-second test template.
+
 `npm run dev` accepts links whose site resolves to a private network address
 (common on campus Wi-Fi and VPNs). A production build refuses them unless started
 with `FEED_ALLOW_PRIVATE_HOSTS=1`, which is only for testing on your own machine.

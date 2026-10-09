@@ -5,7 +5,7 @@ import { ExternalLink, Eye, Pencil, Plus, X } from "lucide-react";
 import { COURSE_COLORS } from "@/lib/model";
 import type { Course, CourseEdit, Task } from "@/lib/types";
 import { duration, relativeDue, typeIconClass, typeMeta, whenLabel } from "@/lib/ui";
-import { courseStyle, useApp } from "./context";
+import { courseStyle, useApp, wireGray } from "./context";
 import { Switch } from "./ScheduleSettings";
 import { DoneToggle } from "./TaskRow";
 import { ClassTimesSummary, useClassTimes } from "./ClassTimes";
@@ -265,7 +265,7 @@ function CourseEditor({ course, original, onDone }: { course: Course; original?:
             aria-label={c}
             onClick={() => setColor(c)}
             className={`w-6 h-6 rounded-full transition ${color === c ? "ring-2 ring-offset-2 ring-offset-surface ring-fg/60" : "hover:scale-110"}`}
-            style={{ background: c }}
+            style={{ background: wireGray(c) }}
           />
         ))}
       </div>

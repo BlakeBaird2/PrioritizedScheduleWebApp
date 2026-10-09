@@ -42,6 +42,7 @@ export function ChangesPopover() {
     <div className="relative" ref={ref}>
       <button type="button" className="btn btn-icon relative" onClick={toggle} aria-label="Changes from your classes" title="Changes from your classes">
         <Bell size={16} />
+        <span className="hidden lg:inline pr-0.5">Alerts</span>
         {unseen > 0 ? (
           <span className="absolute -top-1 -right-1 min-w-[1rem] h-4 px-1 rounded-full bg-danger text-white text-[10px] font-bold flex items-center justify-center tabular-nums">
             {unseen > 9 ? "9+" : unseen}

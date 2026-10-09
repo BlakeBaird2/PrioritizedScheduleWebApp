@@ -11,12 +11,13 @@ export function Banners() {
   return (
     <>
       {ws.demo ? (
-        <div className="mt-4 rounded-xl border border-accent/30 bg-accent/8 px-3.5 py-2.5 text-sm flex items-center gap-3 flex-wrap">
-          <Sparkles size={16} className="text-accent shrink-0" />
+        <div className="mt-4 border border-dashed border-line-strong bg-surface-2 px-3.5 py-2.5 text-[0.9375rem] flex items-center gap-3 flex-wrap">
+          <Sparkles size={16} className="shrink-0" />
           <span className="flex-1 min-w-0">
-            <b className="font-semibold">Sample data.</b> <span className="text-muted">Everything here is made up, so poke around.</span>
+            <b className="font-semibold">Sample data.</b>{" "}
+            <span className="text-muted">Everything here is made up. Press Done on the top task to see the plan move.</span>
           </span>
-          <button type="button" className="btn-primary !py-1.5 !text-[0.8125rem]" onClick={resetEverything}>
+          <button type="button" className="btn" onClick={resetEverything}>
             Use my own calendars
           </button>
         </div>

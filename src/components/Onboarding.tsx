@@ -11,6 +11,7 @@ import { FeedAdder, FeedList, ProviderHelp } from "./Feeds";
 import { HoursForm, WeeklyEditor } from "./ScheduleSettings";
 import { ClassTimesEditor } from "./ClassTimes";
 import { KEYS, writeStored } from "./store";
+import { CapabilityHero, PrototypeBadge } from "./Prototype";
 
 function demoWorkspace(): Workspace {
   const feed = (url: string, name: string, role: FeedConfig["role"], provider: FeedConfig["provider"], color: string): FeedConfig => ({
@@ -55,16 +56,21 @@ export function Onboarding({ onFinish }: { onFinish: () => void }) {
   return (
     <div className="min-h-dvh px-4 py-10 sm:py-16">
       <div className="max-w-xl mx-auto">
-        <Link href="/" className="wordmark inline-block text-3xl select-none" aria-label="Prio home page">
-          Prio<span className="text-accent">.</span>
-        </Link>
-        <p className="mt-2 text-[1.0625rem] text-muted leading-relaxed">
-          Your classes, work and life on one calendar, and a plan for exactly what to work on in every free gap.
-        </p>
+        <div className="flex items-center gap-3">
+          <Link href="/" className="wordmark inline-block text-2xl select-none" aria-label="Prio home page">
+            Prio<span className="text-accent">.</span>
+          </Link>
+          <PrototypeBadge />
+        </div>
+        <CapabilityHero className="mt-6">
+          <p className="mt-3 text-lg text-muted leading-relaxed">
+            Add your calendars and Prio puts your classes, work and life in one place, then plans each free gap for you.
+          </p>
+        </CapabilityHero>
 
         <div className="mt-6 flex items-center gap-2 text-xs font-medium text-muted" aria-label={`Step ${step} of 3`}>
           {[1, 2, 3].map((n) => (
-            <span key={n} className={`h-1 w-10 rounded-full ${step >= n ? "bg-accent" : "bg-line"}`} />
+            <span key={n} className={`h-1.5 w-10 border border-line-strong ${step >= n ? "bg-fg" : "bg-surface"}`} />
           ))}
           <span className="ml-1">Step {step} of 3</span>
         </div>
@@ -72,17 +78,18 @@ export function Onboarding({ onFinish }: { onFinish: () => void }) {
         {step === 1 ? (
           <section className="card p-5 sm:p-6 mt-3 space-y-5">
             <div>
-              <h1 className="text-lg font-semibold">Add your calendars</h1>
+              <h2 className="text-xl font-semibold">Add your calendars</h2>
               <p className="mt-1 text-sm text-muted leading-relaxed">
                 Start with your school calendar from Canvas, Learning Suite or any course site. Prio finds your classes and assignments on its own. Then add
                 your work and personal calendars (Google, Outlook, Apple) so it knows when you&apos;re busy.
               </p>
             </div>
-            <FeedAdder autoFocus />
+            {/* Until a calendar is added, Add calendar is the main action; after that, Continue is. */}
+            <FeedAdder autoFocus primary={ws.feeds.length === 0} />
             <FeedList />
             <ProviderHelp />
             <div className="flex items-center gap-3 flex-wrap pt-1">
-              <button type="button" className="btn-primary" disabled={ws.feeds.length === 0} onClick={() => setStep(hasClasses ? 2 : 3)}>
+              <button type="button" className={ws.feeds.length === 0 ? "btn" : "btn-primary"} disabled={ws.feeds.length === 0} onClick={() => setStep(hasClasses ? 2 : 3)}>
                 Continue
                 <ArrowRight size={16} />
               </button>
@@ -100,7 +107,7 @@ export function Onboarding({ onFinish }: { onFinish: () => void }) {
         ) : step === 2 ? (
           <section className="card p-5 sm:p-6 mt-3 space-y-4">
             <div>
-              <h1 className="text-lg font-semibold">When do your classes meet?</h1>
+              <h2 className="text-xl font-semibold">When do your classes meet?</h2>
               <p className="mt-1 text-sm text-muted leading-relaxed">
                 Class calendars usually list what&apos;s due, not when class is. Add each class&apos;s days and times once so they show on your calendar and
                 Prio plans around them. Skip any class that doesn&apos;t meet in person.
@@ -121,7 +128,7 @@ export function Onboarding({ onFinish }: { onFinish: () => void }) {
         ) : (
           <section className="card p-5 sm:p-6 mt-3 space-y-5">
             <div>
-              <h1 className="text-lg font-semibold">When do you like to work?</h1>
+              <h2 className="text-xl font-semibold">When do you like to work?</h2>
               <p className="mt-1 text-sm text-muted leading-relaxed">
                 Prio fills the gaps between your events with the work that&apos;s due soonest. Tell it when your day starts and ends.
               </p>

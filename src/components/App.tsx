@@ -14,7 +14,7 @@ import { KEYS, parseJson, readStored, useStored, writeStored } from "./store";
 import { Header } from "./Header";
 import { Banners } from "./Banners";
 import { Onboarding, startDemo } from "./Onboarding";
-import { PlanView } from "./PlanView";
+import { PlanHeading, PlanView } from "./PlanView";
 import { CalendarView } from "./CalendarView";
 import { UpcomingView } from "./UpcomingView";
 import { ClassesView } from "./ClassesView";
@@ -148,7 +148,13 @@ function takeDemoFromUrl(): Incoming | null {
 let opened: Incoming | null = null;
 
 function takeFromUrl(): Incoming {
-  opened ??= takeDemoFromUrl() ?? takeSetupFromUrl();
+  if (!opened) {
+    // Every visit opens on the Plan screen, which leads with what Prio does. The
+    // calendar mode and filters are still remembered.
+    const raw = readStored(KEYS.ui);
+    if (raw && parseUi(raw).view !== "plan") writeUi({ view: "plan" });
+    opened = takeDemoFromUrl() ?? takeSetupFromUrl();
+  }
   return opened;
 }
 
@@ -485,6 +491,7 @@ export function App() {
         <div className="min-h-dvh flex flex-col">
           <Header />
           <main className="flex-1 w-full max-w-6xl mx-auto px-4 sm:px-6 pb-24">
+            {ui.view === "plan" ? <PlanHeading /> : null}
             <Banners />
             <div className="mt-4 fade-in" key={ui.view}>
               {ui.view === "plan" && <PlanView />}

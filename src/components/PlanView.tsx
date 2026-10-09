@@ -2,7 +2,7 @@
 
 import { useMemo } from "react";
 import { addDays, differenceInCalendarDays, format, startOfDay } from "date-fns";
-import { ArrowRight, CalendarClock, Check, CircleAlert, Flag, MapPin } from "lucide-react";
+import { ArrowRight, CalendarClock, Check, CircleAlert, Flag, MapPin, Plus } from "lucide-react";
 import type { PlannedWork, ScheduleItem } from "@/lib/timeline";
 import { buildDaySchedule, nowStatus } from "@/lib/timeline";
 import type { Task } from "@/lib/types";
@@ -11,21 +11,18 @@ import { courseStyle, useApp } from "./context";
 import { DoneToggle, PlanNote } from "./TaskRow";
 import { TypeChip } from "./TypeChip";
 import { useClassesWithoutTimes } from "./ClassTimes";
+import { CapabilityHero } from "./Prototype";
 
 /**
  * The home screen. Three questions, in order:
  * what should I do right now, how does the rest of my day look, and what's due soon.
  */
 export function PlanView() {
-  const { snapshot, syncing, now } = useApp();
+  const { snapshot, syncing } = useApp();
   if (!snapshot.at && syncing) return <Loading />;
 
   return (
     <div className="space-y-5">
-      <header>
-        <h1 className="text-2xl font-semibold tracking-tight">{format(now, "EEEE, MMMM d")}</h1>
-        <p className="mt-0.5 text-sm text-muted">Prio fills your free time with whatever is due soonest. Tick things off as you finish them.</p>
-      </header>
       <ClassTimesPrompt />
       <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_22rem] items-start">
         <div className="space-y-5 min-w-0">
@@ -38,6 +35,22 @@ export function PlanView() {
   );
 }
 
+/**
+ * The top of the Plan screen, drawn above any banners (such as the sample-data
+ * one) so what Prio does is the first and biggest thing someone sees here.
+ */
+export function PlanHeading() {
+  const { now } = useApp();
+  return (
+    <CapabilityHero className="pt-6">
+      <p className="mt-2 text-lg text-muted">
+        <span className="text-fg">{format(now, "EEEE, MMMM d")}</span> · Prio fills each free gap with whatever is due soonest. Tick things off as you
+        finish them.
+      </p>
+    </CapabilityHero>
+  );
+}
+
 /** Asks for class times until every class has them, or the person says not now. */
 function ClassTimesPrompt() {
   const { openClassTimes, classTimesTipHidden, hideClassTimesTip } = useApp();
@@ -46,8 +59,8 @@ function ClassTimesPrompt() {
   const names = missing.map((c) => c.code);
   const list = names.length <= 3 ? names.join(", ") : `${names.slice(0, 3).join(", ")} and ${names.length - 3} more`;
   return (
-    <section className="rounded-[var(--radius-xl)] border border-accent/30 bg-accent/[0.06] p-4 flex items-start gap-3 flex-wrap">
-      <CalendarClock size={18} className="text-accent shrink-0 mt-0.5" />
+    <section className="border border-dashed border-line-strong bg-surface-2 p-4 flex items-start gap-3 flex-wrap">
+      <CalendarClock size={18} className="shrink-0 mt-0.5" />
       <div className="min-w-0 flex-1 basis-60">
         <p className="text-sm font-semibold">When do your classes meet?</p>
         <p className="mt-0.5 text-sm text-muted">
@@ -56,7 +69,8 @@ function ClassTimesPrompt() {
         </p>
       </div>
       <div className="flex items-center gap-2">
-        <button type="button" className="btn-primary !py-1.5 !text-[0.8125rem]" onClick={openClassTimes}>
+        <button type="button" className="btn" onClick={openClassTimes}>
+          <Plus size={14} strokeWidth={2.5} />
           Add class times
         </button>
         <button type="button" className="btn" onClick={hideClassTimesTip}>
@@ -143,7 +157,7 @@ function NowCard() {
           ) : null}
         </>
       ) : status.state === "done" ? (
-        <button type="button" className="btn mt-4" onClick={() => setPlanDay(1)}>
+        <button type="button" className="btn-primary mt-4" onClick={() => setPlanDay(1)}>
           See tomorrow
           <ArrowRight size={14} />
         </button>
@@ -179,8 +193,9 @@ function FocusTask({ lead, item }: { lead: string; item: PlannedWork }) {
             {due ? <span className={late ? "text-danger font-medium" : ""}>· {dueIn(due, now)}</span> : null}
           </div>
         </div>
-        <button type="button" className="btn-primary shrink-0" onClick={() => toggleDone(task)}>
-          <Check size={16} strokeWidth={2.5} />
+        {/* The one primary action on the Plan screen. */}
+        <button type="button" className="btn-primary btn-lg shrink-0" onClick={() => toggleDone(task)}>
+          <Check size={18} strokeWidth={2.5} />
           Done
         </button>
       </div>
@@ -203,7 +218,7 @@ function DayPicker() {
             type="button"
             onClick={() => setPlanDay(i)}
             aria-pressed={i === planDay}
-            className={`rounded-lg px-2.5 py-1 text-sm transition ${i === planDay ? "bg-accent text-white font-medium" : "text-muted hover:bg-surface-2 hover:text-fg"}`}
+            className={`rounded-lg px-2.5 py-1 text-sm transition ${i === planDay ? "border border-fg bg-surface-2 text-fg font-semibold underline underline-offset-4" : "border border-transparent text-muted hover:bg-surface-2 hover:text-fg"}`}
           >
             {i === 0 ? "Today" : i === 1 ? "Tomorrow" : format(d.date, "EEE d")}
           </button>

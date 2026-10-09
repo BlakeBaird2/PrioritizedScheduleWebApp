@@ -7,5 +7,5 @@ import { metadata as home } from "../page";
 export const metadata: Metadata = { ...home, robots: { index: false } };
 
 export default function Page() {
-  return <Landing />;
+  return <Landing variant="about" />;
 }
