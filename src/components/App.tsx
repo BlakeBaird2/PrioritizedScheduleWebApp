@@ -13,7 +13,7 @@ import { AppContext, type AppContextValue, type CalMode, type Selection, type Vi
 import { KEYS, parseJson, readStored, useStored, writeStored } from "./store";
 import { Header } from "./Header";
 import { Banners } from "./Banners";
-import { Onboarding } from "./Onboarding";
+import { Onboarding, startDemo } from "./Onboarding";
 import { PlanView } from "./PlanView";
 import { CalendarView } from "./CalendarView";
 import { UpcomingView } from "./UpcomingView";
@@ -112,14 +112,13 @@ function applyImport(ws: Workspace) {
 }
 
 /**
- * A setup link carries the workspace in the URL fragment (#setup=...). It is read
- * once when the page opens and then removed from the address bar. If this browser
- * already has calendars of its own, the user is asked before anything is replaced.
+ * A setup link carries the workspace in the URL fragment (#setup=...). If this
+ * browser already has calendars of its own, the user is asked before anything is
+ * replaced.
  */
 function takeSetupFromUrl(): Incoming {
   if (typeof window === "undefined" || !window.location.hash.startsWith("#setup=")) return { pending: null, message: null };
   const imported = decodeSetup(window.location.hash.slice("#setup=".length));
-  history.replaceState(null, "", window.location.pathname + window.location.search);
   if (!imported) return { pending: null, message: "That setup link is incomplete. Copy it again from your other device." };
   const current = readWorkspace();
   if (current.feeds.length === 0 || current.demo) {
@@ -127,6 +126,36 @@ function takeSetupFromUrl(): Incoming {
     return { pending: null, message: `Setup imported · ${plural(imported.feeds.length, "calendar")}` };
   }
   return { pending: imported, message: null };
+}
+
+/**
+ * The home page's "Try it with sample data" opens /app#demo. Sample data never
+ * replaces calendars someone has already added.
+ */
+function takeDemoFromUrl(): Incoming | null {
+  if (typeof window === "undefined" || window.location.hash !== "#demo") return null;
+  const current = readWorkspace();
+  if (current.feeds.length > 0 && !current.demo) return { pending: null, message: "You already have calendars set up, so the sample data wasn't loaded." };
+  startDemo();
+  return { pending: null, message: null };
+}
+
+/**
+ * What the link that opened the page asked for, worked out once. React can start
+ * the app's first render over, and an import must not be lost, or run twice, when
+ * it does. The fragment is cleared from the address bar once the app is on screen.
+ */
+let opened: Incoming | null = null;
+
+function takeFromUrl(): Incoming {
+  opened ??= takeDemoFromUrl() ?? takeSetupFromUrl();
+  return opened;
+}
+
+function clearUrlFragment() {
+  opened = null;
+  const { hash, pathname, search } = window.location;
+  if (hash === "#demo" || hash.startsWith("#setup=")) history.replaceState(null, "", pathname + search);
 }
 
 // ---------------------------------------------------------------------------
@@ -148,7 +177,8 @@ function useNow(): Date {
 const MINUTE = 60_000;
 
 export function App() {
-  const [incoming, setIncoming] = useState<Incoming>(takeSetupFromUrl);
+  const [incoming, setIncoming] = useState<Incoming>(takeFromUrl);
+  useEffect(() => clearUrlFragment(), []);
   const wsRaw = useStored(KEYS.workspace);
   const snapRaw = useStored(KEYS.snapshot);
   const changesRaw = useStored(KEYS.changes);
