@@ -54,7 +54,8 @@ function Content({ icon: Icon, trailingIcon: Trailing, iconOnly, size, children 
   );
 }
 
-export type ButtonProps = Common & Omit<React.ButtonHTMLAttributes<HTMLButtonElement>, "children"> & { children?: React.ReactNode };
+export type ButtonProps = Common &
+  Omit<React.ButtonHTMLAttributes<HTMLButtonElement>, "children"> & { children?: React.ReactNode; ref?: React.Ref<HTMLButtonElement> };
 
 export function Button({ variant, size, icon, trailingIcon, iconOnly, label, block, className = "", type = "button", children, title, ...rest }: ButtonProps) {
   return (

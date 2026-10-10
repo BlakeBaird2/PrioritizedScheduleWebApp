@@ -24,6 +24,7 @@ import { AddTaskDialog } from "./AddTaskDialog";
 import { ImportDialog } from "./ImportDialog";
 import { ClassTimesDialog } from "./ClassTimes";
 import { Toast } from "./ui";
+import { AppTour } from "./AppTour";
 
 // ---------------------------------------------------------------------------
 // Reading what the browser has stored
@@ -510,6 +511,7 @@ export function App() {
           {selected ? <DetailPanel selection={selected} onClose={() => setSelected(null)} /> : null}
           {addOpen ? <AddTaskDialog onClose={() => setAddOpen(false)} /> : null}
           {classTimesOpen ? <ClassTimesDialog onClose={() => setClassTimesOpen(false)} /> : null}
+          <AppTour blocked={Boolean(selected || addOpen || classTimesOpen || incoming.pending)} />
         </div>
       )}
       {incoming.pending ? (

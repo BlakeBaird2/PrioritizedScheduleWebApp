@@ -24,6 +24,7 @@ import {
   TaskCard,
   TextButton,
   Toast,
+  Tour,
   TypeChip,
   Wordmark,
 } from "./ui";
@@ -85,7 +86,14 @@ const GROUPS: { id: string; title: string; items: { id: string; name: string }[]
       { id: "switch", name: "Switch" },
     ],
   },
-  { id: "feedback", title: "Feedback", items: [{ id: "toast", name: "Toast" }] },
+  {
+    id: "feedback",
+    title: "Feedback and guidance",
+    items: [
+      { id: "toast", name: "Toast" },
+      { id: "tour", name: "Tour" },
+    ],
+  },
 ];
 
 export function DesignLibrary() {
@@ -755,9 +763,10 @@ function Inputs() {
 
 function Feedback() {
   const [shown, setShown] = useState<string | null>(null);
+  const [touring, setTouring] = useState(false);
   return (
     <>
-      <GroupHeading id="feedback" title="Feedback" lead="Every action shows its result." />
+      <GroupHeading id="feedback" title="Feedback and guidance" lead="Every action shows its result, and the first visit gets a short, skippable tour." />
       <Entry
         id="toast"
         name="Toast"
@@ -773,6 +782,40 @@ function Feedback() {
       >
         <Button onClick={() => setShown("Done: Reading: Chapter 5")}>Show an example</Button>
         {shown ? <Toast message={shown} action="Undo" onAction={() => setShown(null)} /> : null}
+      </Entry>
+      <Entry
+        id="tour"
+        name="Tour"
+        summary="A few stops that outline one part of the screen at a time, with a sentence about each."
+        use="Once, the first time someone reaches the Plan screen (after the prototype notice). Again from Settings → Show the quick tour."
+        rules={[
+          "Four stops at most, in the order the screen is read: what to do now, the rest of today, what's due, everything else.",
+          "Nothing is dimmed or blocked; Skip tour and Esc end it at any point.",
+          "Always says where you are (2 of 4) and lets you go back.",
+          "On phones the card sits at the bottom so it never covers the part it explains.",
+        ]}
+        why="New users need to see the core loop (free gap → task → Done) once. A short tour shows it without a manual and gets out of the way."
+        usedIn="Plan (first visit), Settings"
+      >
+        <div className="space-y-2">
+          <div data-tour="demo-a" className="border border-line-strong bg-surface p-3">
+            <SectionLabel>Work on</SectionLabel>
+            <p className="font-semibold">Reading: Chapter 5</p>
+          </div>
+          <div data-tour="demo-b" className="border border-line-strong bg-surface p-3 text-sm">
+            Due this week · 8 tasks
+          </div>
+          <Button onClick={() => setTouring(true)}>Start an example tour</Button>
+        </div>
+        {touring ? (
+          <Tour
+            steps={[
+              { target: "demo-a", title: "Start here", body: "The one task to work on right now." },
+              { target: "demo-b", title: "What's due", body: "Everything due this week, and when it's planned." },
+            ]}
+            onClose={() => setTouring(false)}
+          />
+        ) : null}
       </Entry>
     </>
   );

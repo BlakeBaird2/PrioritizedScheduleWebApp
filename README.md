@@ -151,7 +151,7 @@ see it working without any calendars.
 ## Testing the entry states (prototype)
 
 SmartScheduler is currently styled as a **low-fidelity prototype**: greys and one accent
-colour, a sketch font, square outlined boxes, grey `[image: …]` placeholders.
+colour, a sketch font, square outlined boxes, and wireframe drawings of the app (`src/components/LandingSketches.tsx`) in place of pictures.
 Every entry screen leads with the same sentence — *"See exactly what to work on
 in every free gap of your day."* — and has one primary (accent) button. The
 wireframe rules are at the end of `src/app/globals.css`; the shared pieces

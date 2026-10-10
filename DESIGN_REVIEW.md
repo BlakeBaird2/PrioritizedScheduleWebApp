@@ -35,6 +35,7 @@ supports them.
 | `SegmentedControl` | 4 hand-built "pick one" rows | Header (desktop and phone), calendar range, plan day picker, theme |
 | `Field`, `ChoicePill`, `Switch` | Labels styled differently in each form | Add task, Edit class, Settings |
 | `Toast` | A plain message with no Undo | Every screen |
+| `Tour` | (new) | First visit to Plan; Settings; `/design` example |
 | `Wordmark` | The logo typed out in 5 places | Every header |
 
 ## Principle by principle
@@ -122,6 +123,25 @@ supports them.
 - The Done button is the biggest target on the Plan screen.
 - Dialogs keep keyboard focus inside while open and return it when closed.
 - Warnings use an icon, bold text or a heavy outline, never colour alone.
+
+### 10. Learnability (first visit)
+
+- **Quick tour.** The first time someone reaches the Plan screen, after the prototype
+  notice, a four-step tour outlines what to do now, the rest of today, what's due, and
+  the main views. It's light on purpose. Nothing is dimmed or blocked, "Skip tour" and
+  Esc end it at any point, it shows "2 of 4" and has Back, and it never runs again by
+  itself. Settings → **Show the quick tour** replays it, and so does the development
+  shortcut menu.
+- **Home page drawings.** The crossed-out image boxes are replaced by wireframe drawings
+  of the real app, built from the same library parts. The biggest picture on the entry
+  screen now shows the capability itself: a free gap with tasks planned into it. The
+  drawings use ink, not blue, so the page keeps one blue button ("Start planning").
+
+### 11. Fits without scrolling
+
+| Problem | Fix |
+| --- | --- |
+| The plan's day picker ("Today, Tomorrow, Wed 14 …") scrolled sideways, so later days were hidden. | All seven days share one row: a short weekday on top and the date below, like a phone calendar's week strip. Screen readers hear the full date. |
 
 ## Before and after
 

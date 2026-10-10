@@ -16,7 +16,8 @@ export function SegmentedControl<T extends string | number>({
   scroll = false,
   className = "",
 }: {
-  options: { id: T; label: string; icon?: LucideIcon; hideLabelOnSmall?: boolean }[];
+  /** `sub` adds a second, smaller line under the label (a date under a weekday). */
+  options: { id: T; label: string; sub?: string; ariaLabel?: string; icon?: LucideIcon; hideLabelOnSmall?: boolean }[];
   value: T;
   onChange: (id: T) => void;
   /** Names the group for screen readers ("View", "Calendar range"). */
@@ -36,11 +37,13 @@ export function SegmentedControl<T extends string | number>({
           aria-pressed={o.id === value}
           aria-current={o.id === value ? "true" : undefined}
           onClick={() => onChange(o.id)}
-          className={stretch ? "flex-1 justify-center !px-1.5" : ""}
+          className={`${stretch ? "flex-1 basis-0 min-w-0 justify-center !px-1" : ""} ${o.sub ? "!flex-col !gap-0 !py-1 leading-tight" : ""}`}
           title={o.hideLabelOnSmall ? o.label : undefined}
+          aria-label={o.ariaLabel}
         >
           {o.icon ? <o.icon size={15} aria-hidden /> : null}
           <span className={o.hideLabelOnSmall ? "hidden sm:inline" : ""}>{o.label}</span>
+          {o.sub ? <span className="text-xs tabular-nums">{o.sub}</span> : null}
         </button>
       ))}
     </div>

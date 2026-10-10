@@ -8,3 +8,4 @@ export { Card, CardHeader, SectionLabel, Callout, EmptyState } from "./Surfaces"
 export { SegmentedControl, Switch, Checkbox, Field, ChoicePill } from "./Controls";
 export { ClassChip, TaskCard, FreeGapBlock, Wordmark, Toast } from "./Planning";
 export { TypeChip } from "./TypeChip";
+export { Tour, type TourStep } from "./Tour";

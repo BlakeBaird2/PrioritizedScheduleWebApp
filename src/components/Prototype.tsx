@@ -180,6 +180,14 @@ export function DevStateSwitcher() {
       },
     },
     {
+      label: "Walk through the quick tour again",
+      run: () => {
+        writeStored(KEYS.tour, null);
+        markNoticeRead();
+        go("/app");
+      },
+    },
+    {
       label: "Show prototype notice on next load",
       run: () => {
         writeStored(KEYS.prototypeNotice, null);

@@ -13,7 +13,8 @@
 import Link from "next/link";
 import { ArrowRight, Bell, Check, CircleAlert, GraduationCap, Lock, Plus, RefreshCw, SlidersHorizontal, Sparkles, Target } from "lucide-react";
 import { LinkGuide } from "./LinkGuide";
-import { CapabilityHero, PrototypeBadge, WirePlaceholder } from "./Prototype";
+import { CapabilityHero, PrototypeBadge } from "./Prototype";
+import { DaySketch, LinkSketch, PlanSketch } from "./LandingSketches";
 import { ButtonLink, Wordmark } from "./ui";
 
 const WRAP = "max-w-6xl mx-auto px-4 sm:px-6";
@@ -124,7 +125,7 @@ function Hero({ variant }: { variant: LandingVariant }) {
         </ul>
       </div>
       <div className={`${WRAP} mt-12 pb-16 sm:pb-20`}>
-        <WirePlaceholder label="today's plan: classes and events, with each free gap filled with work" className="h-64 sm:h-80" />
+        <PlanSketch />
       </div>
     </section>
   );
@@ -161,15 +162,15 @@ function HowItWorks() {
           lead="Setting up takes a couple of minutes. After that, your plan keeps itself up to date."
         />
         <ol className="mt-12 grid gap-5 sm:mt-16 md:grid-cols-3">
-          <Step n={1} title="Add your calendar links" art="pasting a calendar link">
+          <Step n={1} title="Add your calendar links" art={<LinkSketch />}>
             Paste a private link from Canvas, Learning Suite, Google, Outlook or Apple. School calendars bring in your classes and assignments. Work and
             personal calendars tell SmartScheduler when you&apos;re busy.
           </Step>
-          <Step n={2} title="SmartScheduler finds your free time" art="a day with the free gaps marked">
+          <Step n={2} title="SmartScheduler finds your free time" art={<DaySketch filled={false} />}>
             Classes, shifts and plans are blocked out, with a little breathing room around each. What&apos;s left inside the hours you choose is your free
             time.
           </Step>
-          <Step n={3} title="Each gap gets what's due soonest" art="work sorted into gaps by due date">
+          <Step n={3} title="Each gap gets what's due soonest" art={<DaySketch filled />}>
             Free time fills with the most urgent work that fits. Big projects are split across gaps, and exams get study time before them.
           </Step>
         </ol>
@@ -178,10 +179,10 @@ function HowItWorks() {
   );
 }
 
-function Step({ n, title, art, children }: { n: number; title: string; art: string; children: React.ReactNode }) {
+function Step({ n, title, art, children }: { n: number; title: string; art: React.ReactNode; children: React.ReactNode }) {
   return (
     <li className="card flex flex-col overflow-hidden">
-      <WirePlaceholder label={art} className="h-40 border-0 border-b" />
+      <div className="border-b border-line-strong">{art}</div>
       <div className="p-5 sm:p-6">
         <div className="flex items-center gap-2.5">
           <span className="grid h-6 w-6 shrink-0 place-items-center border border-line-strong text-sm font-semibold tabular-nums">{n}</span>

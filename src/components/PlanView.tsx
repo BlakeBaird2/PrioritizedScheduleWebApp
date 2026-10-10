@@ -139,7 +139,7 @@ function NowCard() {
 
   return (
     // The focal point of the whole app: a heavier outline than any other card, so the eye lands here first.
-    <Card padding="lg" className="!border-2 !border-fg" aria-label="What to work on now">
+    <Card padding="lg" className="!border-2 !border-fg" aria-label="What to work on now" data-tour="now">
       <div className="flex items-center gap-2 text-sm font-medium">
         <span className={`w-2 h-2 rounded-full shrink-0 ${dot}`} />
         <span className="truncate">{headline}</span>
@@ -204,15 +204,24 @@ function FocusTask({ lead, item }: { lead: string; item: PlannedWork }) {
 // One day: what's on, and the free time between it
 // ---------------------------------------------------------------------------
 
+/**
+ * The next seven days as one row that always fits: a short weekday on top and the
+ * date under it, like the week strip in a phone's calendar. Nothing scrolls sideways.
+ */
 function DayPicker() {
   const { plan, planDay, setPlanDay } = useApp();
   return (
     <SegmentedControl
       label="Day to show"
-      scroll
+      stretch
       value={planDay}
       onChange={setPlanDay}
-      options={plan.days.slice(0, 7).map((d, i) => ({ id: i, label: i === 0 ? "Today" : i === 1 ? "Tomorrow" : format(d.date, "EEE d") }))}
+      options={plan.days.slice(0, 7).map((d, i) => ({
+        id: i,
+        label: i === 0 ? "Today" : format(d.date, "EEE"),
+        sub: format(d.date, "d"),
+        ariaLabel: i === 0 ? `Today, ${format(d.date, "MMMM d")}` : i === 1 ? `Tomorrow, ${format(d.date, "EEEE MMMM d")}` : format(d.date, "EEEE, MMMM d"),
+      }))}
     />
   );
 }
@@ -228,12 +237,10 @@ function DaySchedule() {
   const dueAllDay = schedule.dueAllDay.filter((t) => !t.done);
 
   return (
-    <Card>
-      <div className="flex items-center gap-3 flex-wrap">
-        <h2 className="text-lg font-bold">{isToday ? "The rest of today" : format(day.date, "EEEE, MMMM d")}</h2>
-        <div className="ml-auto min-w-0 max-w-full">
-          <DayPicker />
-        </div>
+    <Card data-tour="today">
+      <h2 className="text-lg font-bold">{isToday ? "The rest of today" : format(day.date, "EEEE, MMMM d")}</h2>
+      <div className="mt-3">
+        <DayPicker />
       </div>
 
       {schedule.allDayEvents.length > 0 || dueAllDay.length > 0 ? (
@@ -420,7 +427,7 @@ function DueSoon() {
   const risky = plan.atRisk.filter((r) => r.dueAt && r.dueAt.getTime() < addDays(startOfDay(now), DUE_SOON_DAYS).getTime()).length;
 
   return (
-    <Card>
+    <Card data-tour="due">
       <CardHeader title="Due this week" />
       {risky > 0 ? (
         <p className="mt-1 text-sm text-danger font-semibold flex items-start gap-1.5">

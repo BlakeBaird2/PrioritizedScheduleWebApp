@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Copy, Info, LayoutTemplate, Moon, RefreshCw, RotateCcw, Sparkles, Sun } from "lucide-react";
+import { Compass, Copy, Info, LayoutTemplate, Moon, RefreshCw, RotateCcw, Sparkles, Sun } from "lucide-react";
 import { encodeSetup } from "@/lib/workspace";
 import { ASSIGNMENT_TYPES, type AssignmentType } from "@/lib/types";
 import { duration, typeIconClass, typeMeta } from "@/lib/ui";
@@ -10,6 +10,7 @@ import { FeedAdder, FeedList, ProviderHelp } from "./Feeds";
 import { HoursForm, WeeklyEditor } from "./ScheduleSettings";
 import { ClassTimesEditor } from "./ClassTimes";
 import { resetEverything, useTheme } from "./store";
+import { startTour } from "./AppTour";
 import { Button, ButtonLink, Card, CardHeader, SegmentedControl, TextButton } from "./ui";
 
 function Section({ title, hint, children }: { title: string; hint?: React.ReactNode; children: React.ReactNode }) {
@@ -161,8 +162,11 @@ export function SettingsView() {
           />
         </Section>
 
-        <Section title="About SmartScheduler" hint="How SmartScheduler plans your time, where to find each calendar link, and the parts the app is built from.">
+        <Section title="About SmartScheduler" hint="A four-step tour of the Plan screen, how SmartScheduler plans your time, and the parts the app is built from.">
           <div className="flex gap-2 flex-wrap">
+            <Button icon={Compass} onClick={startTour}>
+              Show the quick tour
+            </Button>
             <ButtonLink href="/about" icon={Info}>
               How it works
             </ButtonLink>
