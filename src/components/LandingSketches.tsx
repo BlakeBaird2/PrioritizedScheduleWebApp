@@ -12,17 +12,17 @@ import { ClassChip, FreeGapBlock, SectionLabel, TaskCard, Wordmark } from "./ui"
 
 const noop = () => {};
 
-function Sketch({ label, className = "", children }: { label: string; className?: string; children: React.ReactNode }) {
+export function Sketch({ label, className = "", children }: { label: string; className?: string; children: React.ReactNode }) {
   return (
     <div role="img" aria-label={label} className={`relative overflow-hidden bg-surface-2 select-none ${className}`}>
-      <div inert className="h-full">
+      <div inert className="contents">
         {children}
       </div>
     </div>
   );
 }
 
-function SketchEvent({ title, time, className = "" }: { title: string; time: string; className?: string }) {
+export function SketchEvent({ title, time, className = "" }: { title: string; time: string; className?: string }) {
   return (
     <div className={`event-block px-2 py-1 ${className}`} style={{ "--c": "#8a8a8a" } as React.CSSProperties}>
       <div className="text-[12px] font-semibold leading-tight">{title}</div>
@@ -165,7 +165,7 @@ export function PlanSketch() {
 /** Step 1: a calendar link pasted in, and the calendar it became. */
 export function LinkSketch() {
   return (
-    <Sketch label="A sketch of pasting a Canvas calendar link and pressing Add calendar." className="h-44 p-4 flex flex-col justify-center gap-3">
+    <Sketch label="A sketch of pasting a Canvas calendar link and pressing Add calendar." className="h-56 p-4 flex flex-col justify-center gap-3">
       <div className="flex items-center gap-2">
         <div className="flex-1 min-w-0 flex items-center gap-2 border border-fg bg-surface px-2.5 py-1.5 text-sm">
           <LinkIcon size={14} className="shrink-0 text-muted" aria-hidden />
@@ -185,7 +185,7 @@ export function LinkSketch() {
 }
 
 /** Steps 2 and 3: a day with its busy blocks, and the free gaps between them, empty or filled. */
-export function DaySketch({ filled }: { filled: boolean }) {
+export function DaySketch({ filled, className = "h-56" }: { filled: boolean; className?: string }) {
   return (
     <Sketch
       label={
@@ -193,7 +193,7 @@ export function DaySketch({ filled }: { filled: boolean }) {
           ? "A sketch of a day where each free gap between classes and work holds the task due soonest."
           : "A sketch of a day with classes and a work shift blocked out, and the free gaps between them marked."
       }
-      className="h-44 px-4 py-3"
+      className={`${className} px-4 py-3`}
     >
       <div className="grid grid-cols-[2.75rem_minmax(0,1fr)] gap-x-2 gap-y-1.5 items-stretch text-[11px]">
         <span className="pt-1 text-right">10 AM</span>

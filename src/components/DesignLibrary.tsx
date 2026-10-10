@@ -786,32 +786,42 @@ function Feedback() {
       <Entry
         id="tour"
         name="Tour"
-        summary="A few stops that outline one part of the screen at a time, with a sentence about each."
-        use="Once, the first time someone reaches the Plan screen (after the prototype notice). Again from Settings → Show the quick tour."
+        summary="A short walkthrough in a pop-up: a wireframe picture and a sentence or two per step."
+        use="Once, the first time someone opens the app (after the prototype notice). Again from Settings → Show the walkthrough."
         rules={[
-          "Four stops at most, in the order the screen is read: what to do now, the rest of today, what's due, everything else.",
-          "Nothing is dimmed or blocked; Skip tour and Esc end it at any point.",
-          "Always says where you are (2 of 4) and lets you go back.",
-          "On phones the card sits at the bottom so it never covers the part it explains.",
+          "Four steps at most, in the order the Plan screen is read: what to do now, the rest of today, what's due, everything else.",
+          "Built on Dialog, so it closes the same way (Esc, the X, a click outside) and never follows the page around.",
+          "Always says where you are (Step 2 of 4, with dots), with Back, Next and the arrow keys.",
+          "Skip is always there, and the last button says what happens next (Show my plan).",
         ]}
-        why="New users need to see the core loop (free gap → task → Done) once. A short tour shows it without a manual and gets out of the way."
-        usedIn="Plan (first visit), Settings"
+        why="New users need to see the core loop (free gap → task → Done) once. A short walkthrough shows it without a manual and gets out of the way."
+        usedIn="App (first visit), Settings"
       >
-        <div className="space-y-2">
-          <div data-tour="demo-a" className="border border-line-strong bg-surface p-3">
-            <SectionLabel>Work on</SectionLabel>
-            <p className="font-semibold">Reading: Chapter 5</p>
-          </div>
-          <div data-tour="demo-b" className="border border-line-strong bg-surface p-3 text-sm">
-            Due this week · 8 tasks
-          </div>
-          <Button onClick={() => setTouring(true)}>Start an example tour</Button>
-        </div>
+        <Button onClick={() => setTouring(true)}>Open an example walkthrough</Button>
         {touring ? (
           <Tour
             steps={[
-              { target: "demo-a", title: "Start here", body: "The one task to work on right now." },
-              { target: "demo-b", title: "What's due", body: "Everything due this week, and when it's planned." },
+              {
+                title: "Start with the task in front of you",
+                body: "The one task to work on in your free time right now.",
+                picture: (
+                  <div className="h-full bg-surface-2 p-4 flex items-center">
+                    <div className="w-full border-2 border-fg bg-surface p-3">
+                      <SectionLabel>Work on</SectionLabel>
+                      <p className="font-semibold">Reading: Chapter 5</p>
+                    </div>
+                  </div>
+                ),
+              },
+              {
+                title: "See what's due",
+                body: "Everything due this week, and when it's planned.",
+                picture: (
+                  <div className="h-full bg-surface-2 p-4 flex items-center">
+                    <div className="w-full border border-line-strong bg-surface p-3">Due this week · 8 tasks</div>
+                  </div>
+                ),
+              },
             ]}
             onClose={() => setTouring(false)}
           />

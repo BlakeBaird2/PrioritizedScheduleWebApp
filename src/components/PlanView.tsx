@@ -139,7 +139,7 @@ function NowCard() {
 
   return (
     // The focal point of the whole app: a heavier outline than any other card, so the eye lands here first.
-    <Card padding="lg" className="!border-2 !border-fg" aria-label="What to work on now" data-tour="now">
+    <Card padding="lg" className="!border-2 !border-fg" aria-label="What to work on now">
       <div className="flex items-center gap-2 text-sm font-medium">
         <span className={`w-2 h-2 rounded-full shrink-0 ${dot}`} />
         <span className="truncate">{headline}</span>
@@ -237,7 +237,7 @@ function DaySchedule() {
   const dueAllDay = schedule.dueAllDay.filter((t) => !t.done);
 
   return (
-    <Card data-tour="today">
+    <Card>
       <h2 className="text-lg font-bold">{isToday ? "The rest of today" : format(day.date, "EEEE, MMMM d")}</h2>
       <div className="mt-3">
         <DayPicker />
@@ -427,7 +427,7 @@ function DueSoon() {
   const risky = plan.atRisk.filter((r) => r.dueAt && r.dueAt.getTime() < addDays(startOfDay(now), DUE_SOON_DAYS).getTime()).length;
 
   return (
-    <Card data-tour="due">
+    <Card>
       <CardHeader title="Due this week" />
       {risky > 0 ? (
         <p className="mt-1 text-sm text-danger font-semibold flex items-start gap-1.5">

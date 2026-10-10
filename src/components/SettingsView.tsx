@@ -162,10 +162,10 @@ export function SettingsView() {
           />
         </Section>
 
-        <Section title="About SmartScheduler" hint="A four-step tour of the Plan screen, how SmartScheduler plans your time, and the parts the app is built from.">
+        <Section title="About SmartScheduler" hint="A four-step walkthrough of the app, how SmartScheduler plans your time, and the parts the app is built from.">
           <div className="flex gap-2 flex-wrap">
             <Button icon={Compass} onClick={startTour}>
-              Show the quick tour
+              Show the walkthrough
             </Button>
             <ButtonLink href="/about" icon={Info}>
               How it works

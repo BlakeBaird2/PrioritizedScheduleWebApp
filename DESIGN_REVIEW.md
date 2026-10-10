@@ -35,7 +35,7 @@ supports them.
 | `SegmentedControl` | 4 hand-built "pick one" rows | Header (desktop and phone), calendar range, plan day picker, theme |
 | `Field`, `ChoicePill`, `Switch` | Labels styled differently in each form | Add task, Edit class, Settings |
 | `Toast` | A plain message with no Undo | Every screen |
-| `Tour` | (new) | First visit to Plan; Settings; `/design` example |
+| `Tour` (walkthrough) | (new) | First visit; Settings; `/design` example |
 | `Wordmark` | The logo typed out in 5 places | Every header |
 
 ## Principle by principle
@@ -126,12 +126,14 @@ supports them.
 
 ### 10. Learnability (first visit)
 
-- **Quick tour.** The first time someone reaches the Plan screen, after the prototype
-  notice, a four-step tour outlines what to do now, the rest of today, what's due, and
-  the main views. It's light on purpose. Nothing is dimmed or blocked, "Skip tour" and
-  Esc end it at any point, it shows "2 of 4" and has Back, and it never runs again by
-  itself. Settings → **Show the quick tour** replays it, and so does the development
-  shortcut menu.
+- **Walkthrough.** The first time someone opens the app, after the prototype notice,
+  a four-step walkthrough in a pop-up covers what to do now, the rest of today, what's
+  due, and where everything else is. Each step has a small wireframe drawing and a
+  sentence or two. It's built on the shared `Dialog`, so it closes the same way as every
+  other pop-up and never follows the page around. It always shows "Step 2 of 4" with
+  dots, has Back, Next and arrow keys, keeps "Skip" visible, and the last button says
+  what happens next ("Show my plan"). It never runs again by itself. Settings →
+  **Show the walkthrough** replays it, and so does the development shortcut menu.
 - **Home page drawings.** The crossed-out image boxes are replaced by wireframe drawings
   of the real app, built from the same library parts. The biggest picture on the entry
   screen now shows the capability itself: a free gap with tasks planned into it. The

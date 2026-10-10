@@ -180,7 +180,7 @@ export function DevStateSwitcher() {
       },
     },
     {
-      label: "Walk through the quick tour again",
+      label: "Show the walkthrough again",
       run: () => {
         writeStored(KEYS.tour, null);
         markNoticeRead();

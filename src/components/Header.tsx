@@ -32,7 +32,7 @@ export function Header() {
         </button>
         <PrototypeBadge />
 
-        <nav className="ml-2 hidden md:block" aria-label="Main" data-tour="nav">
+        <nav className="ml-2 hidden md:block" aria-label="Main">
           <SegmentedControl label="Main views" options={TABS} value={view} onChange={setView} />
         </nav>
 
@@ -70,7 +70,7 @@ export function Header() {
           </Button>
         </div>
       </div>
-      <nav className="md:hidden px-4 pb-2" aria-label="Main" data-tour="nav">
+      <nav className="md:hidden px-4 pb-2" aria-label="Main">
         <SegmentedControl label="Main views" options={TABS} value={view} onChange={setView} stretch />
       </nav>
     </header>
