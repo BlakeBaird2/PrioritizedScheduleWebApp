@@ -149,7 +149,7 @@ let opened: Incoming | null = null;
 
 function takeFromUrl(): Incoming {
   if (!opened) {
-    // Every visit opens on the Plan screen, which leads with what Prio does. The
+    // Every visit opens on the Plan screen, which leads with what SmartScheduler does. The
     // calendar mode and filters are still remembered.
     const raw = readStored(KEYS.ui);
     if (raw && parseUi(raw).view !== "plan") writeUi({ view: "plan" });
@@ -243,7 +243,7 @@ export function App() {
 
   const saveSnapshot = useCallback(
     (s: Snapshot) => {
-      if (!writeJson(KEYS.snapshot, s)) toast("Browser storage is full, so calendars will be re-read next time you open Prio.");
+      if (!writeJson(KEYS.snapshot, s)) toast("Browser storage is full, so calendars will be re-read next time you open SmartScheduler.");
     },
     [toast],
   );

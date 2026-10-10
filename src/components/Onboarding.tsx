@@ -57,14 +57,14 @@ export function Onboarding({ onFinish }: { onFinish: () => void }) {
     <div className="min-h-dvh px-4 py-10 sm:py-16">
       <div className="max-w-xl mx-auto">
         <div className="flex items-center gap-3">
-          <Link href="/" className="wordmark inline-block text-2xl select-none" aria-label="Prio home page">
-            Prio<span className="text-accent">.</span>
+          <Link href="/" className="wordmark inline-block text-2xl select-none" aria-label="SmartScheduler home page">
+            SmartScheduler<span className="text-accent">.</span>
           </Link>
           <PrototypeBadge />
         </div>
         <CapabilityHero className="mt-6">
           <p className="mt-3 text-lg text-muted leading-relaxed">
-            Add your calendars and Prio puts your classes, work and life in one place, then plans each free gap for you.
+            Add your calendars and SmartScheduler puts your classes, work and life in one place, then plans each free gap for you.
           </p>
         </CapabilityHero>
 
@@ -80,7 +80,7 @@ export function Onboarding({ onFinish }: { onFinish: () => void }) {
             <div>
               <h2 className="text-xl font-semibold">Add your calendars</h2>
               <p className="mt-1 text-sm text-muted leading-relaxed">
-                Start with your school calendar from Canvas, Learning Suite or any course site. Prio finds your classes and assignments on its own. Then add
+                Start with your school calendar from Canvas, Learning Suite or any course site. SmartScheduler finds your classes and assignments on its own. Then add
                 your work and personal calendars (Google, Outlook, Apple) so it knows when you&apos;re busy.
               </p>
             </div>
@@ -110,7 +110,7 @@ export function Onboarding({ onFinish }: { onFinish: () => void }) {
               <h2 className="text-xl font-semibold">When do your classes meet?</h2>
               <p className="mt-1 text-sm text-muted leading-relaxed">
                 Class calendars usually list what&apos;s due, not when class is. Add each class&apos;s days and times once so they show on your calendar and
-                Prio plans around them. Skip any class that doesn&apos;t meet in person.
+                SmartScheduler plans around them. Skip any class that doesn&apos;t meet in person.
               </p>
             </div>
             <ClassTimesEditor />
@@ -130,7 +130,7 @@ export function Onboarding({ onFinish }: { onFinish: () => void }) {
             <div>
               <h2 className="text-xl font-semibold">When do you like to work?</h2>
               <p className="mt-1 text-sm text-muted leading-relaxed">
-                Prio fills the gaps between your events with the work that&apos;s due soonest. Tell it when your day starts and ends.
+                SmartScheduler fills the gaps between your events with the work that&apos;s due soonest. Tell it when your day starts and ends.
               </p>
             </div>
             <HoursForm />

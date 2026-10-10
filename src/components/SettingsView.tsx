@@ -50,7 +50,7 @@ export function SettingsView() {
         hint={
           ws.demo
             ? "You're looking at sample calendars."
-            : "Prio re-reads these when you open it, when you come back to the tab, and every 30 minutes while it's open."
+            : "SmartScheduler re-reads these when you open it, when you come back to the tab, and every 30 minutes while it's open."
         }
       >
         {ws.demo ? (
@@ -77,17 +77,17 @@ export function SettingsView() {
             {helpOpen ? <ProviderHelp /> : null}
             <p className="text-xs text-muted leading-relaxed">
               <b className="font-medium text-fg">School</b> calendars bring in classes and assignments. <b className="font-medium text-fg">Personal</b> calendars
-              only tell Prio when you&apos;re busy; their events never turn into homework.
+              only tell SmartScheduler when you&apos;re busy; their events never turn into homework.
             </p>
           </div>
         )}
       </Section>
 
-      <Section title="Class times" hint="When each class meets. Class calendars rarely include this, so add it here and Prio plans around it.">
+      <Section title="Class times" hint="When each class meets. Class calendars rarely include this, so add it here and SmartScheduler plans around it.">
         <ClassTimesEditor />
       </Section>
 
-      <Section title="Your schedule" hint="Prio plans work inside these hours and around everything on your calendars.">
+      <Section title="Your schedule" hint="SmartScheduler plans work inside these hours and around everything on your calendars.">
         <HoursForm advanced />
       </Section>
 
@@ -126,7 +126,7 @@ export function SettingsView() {
 
       {!ws.demo ? (
         <Section
-          title="Use Prio on another device"
+          title="Use SmartScheduler on another device"
           hint="Copy a setup link and open it on your phone or laptop to bring your calendars, classes and choices across. It holds your private calendar links, so only send it to yourself."
         >
           <button type="button" className="btn" onClick={copySetup}>
@@ -136,7 +136,7 @@ export function SettingsView() {
         </Section>
       ) : null}
 
-      <Section title="About Prio" hint="The home page explains how Prio plans your time and where to find the link for each calendar.">
+      <Section title="About SmartScheduler" hint="The home page explains how SmartScheduler plans your time and where to find the link for each calendar.">
         <Link href="/about" className="btn">
           <Info size={15} />
           Open the home page

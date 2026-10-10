@@ -37,14 +37,14 @@ export function PlanView() {
 
 /**
  * The top of the Plan screen, drawn above any banners (such as the sample-data
- * one) so what Prio does is the first and biggest thing someone sees here.
+ * one) so what SmartScheduler does is the first and biggest thing someone sees here.
  */
 export function PlanHeading() {
   const { now } = useApp();
   return (
     <CapabilityHero className="pt-6">
       <p className="mt-2 text-lg text-muted">
-        <span className="text-fg">{format(now, "EEEE, MMMM d")}</span> · Prio fills each free gap with whatever is due soonest. Tick things off as you
+        <span className="text-fg">{format(now, "EEEE, MMMM d")}</span> · SmartScheduler fills each free gap with whatever is due soonest. Tick things off as you
         finish them.
       </p>
     </CapabilityHero>

@@ -1,11 +1,11 @@
 /**
- * The home page: what Prio does, how it works, and where to find each calendar
+ * The home page: what SmartScheduler does, how it works, and where to find each calendar
  * link. It renders on the server so it shows up at once; only the link guide's
  * tabs and the Prototype tag run in the browser. Anyone who already has calendars
  * set up skips it (see the root layout) and goes straight to the app at /app.
  *
  * The same page is served at /about (`variant="about"`) for people who already use
- * Prio, where the main button opens the app instead of starting setup.
+ * SmartScheduler, where the main button opens the app instead of starting setup.
  *
  * This is a low-fidelity prototype: illustrations are grey placeholders, and each
  * screen has one primary (accent) button, with every other action drawn quieter.
@@ -75,8 +75,8 @@ function Nav() {
   return (
     <header className="sticky top-0 z-30 border-b border-line-strong bg-bg">
       <div className={`${WRAP} flex h-14 items-center gap-3 sm:gap-6`}>
-        <a href="#top" className="wordmark text-xl select-none" aria-label="Prio, back to top">
-          Prio<span className="text-accent">.</span>
+        <a href="#top" className="wordmark text-xl select-none" aria-label="SmartScheduler, back to top">
+          SmartScheduler<span className="text-accent">.</span>
         </a>
         <PrototypeBadge />
         <nav aria-label="On this page" className="hidden items-center gap-6 text-base text-muted md:flex">
@@ -92,7 +92,7 @@ function Nav() {
         </nav>
         {/* Quiet on purpose: the hero holds this screen's one primary button. */}
         <Link href="/app" className="btn ml-auto">
-          Open Prio
+          Open SmartScheduler
         </Link>
       </div>
     </header>
@@ -106,12 +106,12 @@ function Hero({ variant }: { variant: LandingVariant }) {
         {/* The overarching capability comes first and is the biggest thing on the page. */}
         <CapabilityHero id="hero-title" size="page" className="mx-auto max-w-5xl">
           <p className="mx-auto mt-6 max-w-2xl text-lg leading-relaxed text-muted text-pretty sm:text-xl">
-            Prio puts your classes and assignments from Canvas, your shifts and your plans from Google, Outlook or Apple on one calendar. Then it fills each
+            SmartScheduler puts your classes and assignments from Canvas, your shifts and your plans from Google, Outlook or Apple on one calendar. Then it fills each
             free gap with whatever&apos;s due soonest.
           </p>
         </CapabilityHero>
         <div className="mt-8 flex flex-col items-stretch justify-center gap-3 sm:flex-row sm:items-center">
-          {variant === "about" ? <StartLink primary>Open Prio</StartLink> : <StartLink primary>Start planning</StartLink>}
+          {variant === "about" ? <StartLink primary>Open SmartScheduler</StartLink> : <StartLink primary>Start planning</StartLink>}
           <SampleLink className="btn btn-lg" />
         </div>
         <ul className="mt-6 flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-base text-muted">
@@ -157,15 +157,15 @@ function HowItWorks() {
         <SectionIntro
           id="how-title"
           eyebrow="How it works"
-          title="Paste your links. Prio does the rest."
+          title="Paste your links. SmartScheduler does the rest."
           lead="Setting up takes a couple of minutes. After that, your plan keeps itself up to date."
         />
         <ol className="mt-12 grid gap-5 sm:mt-16 md:grid-cols-3">
           <Step n={1} title="Add your calendar links" art="pasting a calendar link">
             Paste a private link from Canvas, Learning Suite, Google, Outlook or Apple. School calendars bring in your classes and assignments. Work and
-            personal calendars tell Prio when you&apos;re busy.
+            personal calendars tell SmartScheduler when you&apos;re busy.
           </Step>
-          <Step n={2} title="Prio finds your free time" art="a day with the free gaps marked">
+          <Step n={2} title="SmartScheduler finds your free time" art="a day with the free gaps marked">
             Classes, shifts and plans are blocked out, with a little breathing room around each. What&apos;s left inside the hours you choose is your free
             time.
           </Step>
@@ -199,12 +199,12 @@ const FEATURES = [
   {
     icon: Target,
     title: "What to do right now",
-    text: "Open Prio and the first thing you see is the one task to work on now, with a Done button.",
+    text: "Open SmartScheduler and the first thing you see is the one task to work on now, with a Done button.",
   },
   {
     icon: CircleAlert,
     title: "Warnings while there's still time",
-    text: "If something won't fit before it's due, Prio tells you early, while you can still make room for it.",
+    text: "If something won't fit before it's due, SmartScheduler tells you early, while you can still make room for it.",
   },
   {
     icon: Bell,
@@ -214,7 +214,7 @@ const FEATURES = [
   {
     icon: RefreshCw,
     title: "Always up to date",
-    text: "Calendar links are live. Prio re-reads them whenever you open it, and every 30 minutes while it's open.",
+    text: "Calendar links are live. SmartScheduler re-reads them whenever you open it, and every 30 minutes while it's open.",
   },
   {
     icon: GraduationCap,
@@ -234,9 +234,9 @@ function Features() {
       <div className={WRAP}>
         <SectionIntro
           id="features-title"
-          eyebrow="Why Prio"
+          eyebrow="Why SmartScheduler"
           title="Always know what to work on next"
-          lead="No more checking three apps to work out when you'll get anything done. Prio keeps one plan, and keeps it current."
+          lead="No more checking three apps to work out when you'll get anything done. SmartScheduler keeps one plan, and keeps it current."
         />
         <div className="mt-12 grid gap-x-10 gap-y-10 sm:mt-16 sm:grid-cols-2 lg:grid-cols-3">
           {FEATURES.map((f) => (
@@ -264,13 +264,13 @@ function GetYourLinks() {
           id="links-title"
           eyebrow="Get started"
           title="Where to find your calendar links"
-          lead="Every calendar app can share a private link to your calendar, usually called iCal, ICS or webcal. Copy one from each app you use and paste them into Prio. They stay up to date on their own."
+          lead="Every calendar app can share a private link to your calendar, usually called iCal, ICS or webcal. Copy one from each app you use and paste them into SmartScheduler. They stay up to date on their own."
         />
         <div className="mt-10 sm:mt-12">
           <LinkGuide />
         </div>
         <div className="mt-10 flex flex-col items-stretch justify-center gap-3 sm:flex-row sm:items-center">
-          <StartLink>Paste your links into Prio</StartLink>
+          <StartLink>Paste your links into SmartScheduler</StartLink>
           <SampleLink className="btn btn-lg">No links handy? Try sample data</SampleLink>
         </div>
         <p className="mt-5 text-center text-xs text-muted">
@@ -286,7 +286,7 @@ function GetYourLinks() {
 
 const FAQ = [
   {
-    q: "Is Prio free? Do I need an account?",
+    q: "Is SmartScheduler free? Do I need an account?",
     a: "It's free, and there's no account or sign-up. Open it, paste your calendar links and you have a plan.",
   },
   {
@@ -294,19 +294,19 @@ const FAQ = [
     a: "In your browser. Your calendar links, classes, done marks and settings are saved on your device. When a calendar is refreshed, the server reads it, hands it straight back and keeps nothing.",
   },
   {
-    q: "Can Prio tell when I've turned something in?",
+    q: "Can SmartScheduler tell when I've turned something in?",
     a: "No. Calendar links say when work is due, not whether you've handed it in, so you tick things off as you finish them. When you first add a school calendar, anything already past due is marked done for you.",
   },
   {
     q: "My class calendar doesn't say when class meets. Is that a problem?",
-    a: "Most don't, so Prio asks. Add each class's days and times once during setup, and Prio shows them on your calendar and plans around them.",
+    a: "Most don't, so SmartScheduler asks. Add each class's days and times once during setup, and SmartScheduler shows them on your calendar and plans around them.",
   },
   {
     q: "What if my job isn't on any calendar?",
-    a: "Add your shifts as a weekly busy time during setup, the same way you'd add practice or a commute. Prio plans around them like anything else.",
+    a: "Add your shifts as a weekly busy time during setup, the same way you'd add practice or a commute. SmartScheduler plans around them like anything else.",
   },
   {
-    q: "How does Prio decide what comes first?",
+    q: "How does SmartScheduler decide what comes first?",
     a: "Whatever's due soonest goes first. If the most urgent thing is too long for a short gap, the next thing that fits goes there instead, so short gaps still get used. You can change how long anything takes and the plan updates.",
   },
   {
@@ -377,7 +377,7 @@ function Footer() {
       <div className={`${WRAP} flex flex-col gap-6 py-10 sm:flex-row sm:items-center sm:justify-between`}>
         <div>
           <div className="wordmark text-lg select-none">
-            Prio<span className="text-accent">.</span>
+            SmartScheduler<span className="text-accent">.</span>
           </div>
           <p className="mt-1 text-sm text-muted">One calendar for school, work and life, with a plan for every gap. An early prototype.</p>
         </div>
@@ -392,7 +392,7 @@ function Footer() {
             FAQ
           </a>
           <Link href="/app" className="hover:text-fg">
-            Open Prio
+            Open SmartScheduler
           </Link>
         </nav>
       </div>

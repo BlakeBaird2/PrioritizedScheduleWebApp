@@ -7,7 +7,7 @@
  *   whichever page they arrive on. Dismissing it is remembered in this browser
  *   (localStorage, key KEYS.prototypeNotice), apart from calendars and settings.
  * - PrototypeBadge: the "Prototype" tag in each header. It reopens the notice.
- * - CapabilityHero: the one sentence that says what Prio does, drawn as the first
+ * - CapabilityHero: the one sentence that says what SmartScheduler does, drawn as the first
  *   and biggest thing on each entry screen.
  * - WirePlaceholder: a grey box standing in for a picture, labelled in words.
  * - DevStateSwitcher: development-only shortcuts to each entry state.
@@ -77,7 +77,7 @@ export function PrototypeNotice() {
           {PROTOTYPE_MESSAGE}
         </h2>
         <p className="mt-3 text-base text-muted leading-relaxed">
-          Prio still works: add your calendars or try the sample data, and it plans your free time. You can read this again any time from the{" "}
+          SmartScheduler still works: add your calendars or try the sample data, and it plans your free time. You can read this again any time from the{" "}
           <b className="text-fg">Prototype</b> tag at the top.
         </p>
         <button ref={buttonRef} type="button" className="btn-primary mt-5 w-full" onClick={close}>
@@ -143,7 +143,7 @@ export function WirePlaceholder({ label, className = "" }: { label: string; clas
 // Development only
 // ---------------------------------------------------------------------------
 
-/** Everything Prio keeps in this browser, so "new visitor" really starts blank. */
+/** Everything SmartScheduler keeps in this browser, so "new visitor" really starts blank. */
 function clearPrioStorage({ keepNotice }: { keepNotice: boolean }) {
   const theme = readStored(KEYS.theme);
   for (const key of Object.values(KEYS)) {

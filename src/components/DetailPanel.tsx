@@ -85,7 +85,7 @@ function TaskDetail({ task, onClose }: { task: Task; onClose: () => void }) {
               </span>
             ) : null}
             <TypeChip type={task.type} />
-            {task.generated === "study" ? <span className="text-xs text-muted">Study time added by Prio</span> : null}
+            {task.generated === "study" ? <span className="text-xs text-muted">Study time added by SmartScheduler</span> : null}
           </div>
         </div>
         <button type="button" className="btn btn-icon" onClick={onClose} aria-label="Close">
@@ -287,7 +287,7 @@ function EventDetail({ event, onClose }: { event: CalEvent; onClose: () => void 
           </div>
         ) : null}
         <p className="text-sm text-muted">
-          {event.busy ? "Prio plans your work around this." : "This doesn't block your time, so Prio can plan work during it."}
+          {event.busy ? "SmartScheduler plans your work around this." : "This doesn't block your time, so SmartScheduler can plan work during it."}
         </p>
         {editable ? (
           editing ? (

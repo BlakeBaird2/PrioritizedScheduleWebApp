@@ -70,7 +70,7 @@ export function ChangesPopover() {
             ) : null}
           </div>
           {changes.length === 0 ? (
-            <p className="px-3.5 py-6 text-sm text-muted text-center">Nothing has changed yet. Prio checks every time your calendars refresh.</p>
+            <p className="px-3.5 py-6 text-sm text-muted text-center">Nothing has changed yet. SmartScheduler checks every time your calendars refresh.</p>
           ) : (
             <ul className="divide-y divide-line">
               {changes.map((c) => {

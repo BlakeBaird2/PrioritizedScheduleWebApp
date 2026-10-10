@@ -3,7 +3,7 @@ import "./globals.css";
 import { DevStateSwitcher, PrototypeNotice } from "@/components/Prototype";
 
 export const metadata: Metadata = {
-  title: "Prio — Prioritized Schedule",
+  title: "SmartScheduler — Prioritized Schedule",
   description: "Your classes, work and life on one calendar, and a plan for exactly what to work on in every free gap.",
   icons: { icon: "/icon.svg" },
 };
@@ -23,7 +23,7 @@ const themeScript = `(function(){try{var t=localStorage.getItem('prio:theme');if
 // The home page is for newcomers. Opening "/" in a browser that already has calendars
 // goes straight to the plan before anything is drawn, and a setup link made before
 // the app moved to /app still lands there. The same page at /about never skips ahead,
-// which is where Settings → About Prio leads.
+// which is where Settings → About SmartScheduler leads.
 const homeScript = `(function(){try{if(location.pathname!=='/')return;var h=location.hash;if(h.indexOf('#setup=')===0){location.replace('/app'+h);return}var w=JSON.parse(localStorage.getItem('prio:ws')||'null');if(w&&w.feeds&&w.feeds.length)location.replace('/app')}catch(e){}})();`;
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

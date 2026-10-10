@@ -305,7 +305,7 @@ export function ClassTimesDialog({ onClose }: { onClose: () => void }) {
             <h2 id="class-times-title" className="text-base font-semibold">
               When do your classes meet?
             </h2>
-            <p className="mt-0.5 text-sm text-muted">They&apos;ll show on your calendar, and Prio will plan work around them.</p>
+            <p className="mt-0.5 text-sm text-muted">They&apos;ll show on your calendar, and SmartScheduler will plan work around them.</p>
           </div>
           <button type="button" className="btn btn-icon" onClick={onClose} aria-label="Close">
             <X size={16} />

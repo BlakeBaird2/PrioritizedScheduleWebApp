@@ -21,8 +21,8 @@ export function Header() {
   return (
     <header className="sticky top-0 z-30 bg-bg border-b border-line-strong">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 h-14 flex items-center gap-2 sm:gap-3">
-        <button type="button" onClick={() => setView("plan")} className="wordmark text-xl select-none" aria-label="Prio, go to your plan">
-          Prio<span className="text-accent">.</span>
+        <button type="button" onClick={() => setView("plan")} className="wordmark text-xl select-none" aria-label="SmartScheduler, go to your plan">
+          SmartScheduler<span className="text-accent">.</span>
         </button>
         <PrototypeBadge />
 
