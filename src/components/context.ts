@@ -54,7 +54,8 @@ export interface AppContextValue {
   classTimesTipHidden: boolean;
   hideClassTimesTip: () => void;
   clearChanges: () => void;
-  toast: (message: string) => void;
+  /** Confirm what just happened. Pass `undo` when the action can be taken back; the message then offers Undo. */
+  toast: (message: string, options?: { undo?: () => void }) => void;
 }
 
 export const AppContext = createContext<AppContextValue | null>(null);
@@ -65,6 +66,21 @@ export function useApp(): AppContextValue {
   return ctx;
 }
 
+/**
+ * The prototype is drawn as a grayscale wireframe, so every class and calendar
+ * colour is shown as a grey of the same lightness. Classes keep distinct shades,
+ * and the colour each one is saved with is untouched, so a full-colour design can
+ * come back by returning `color` unchanged here.
+ */
+export function wireGray(color: string | undefined | null): string {
+  const m = /^#?([0-9a-f]{6})$/i.exec((color ?? "").trim());
+  if (!m) return color && color.startsWith("var(") ? color : "#6b6b6b";
+  const n = parseInt(m[1], 16);
+  const y = Math.round(0.2126 * ((n >> 16) & 255) + 0.7152 * ((n >> 8) & 255) + 0.0722 * (n & 255));
+  const h = Math.min(255, Math.max(0, y)).toString(16).padStart(2, "0");
+  return `#${h}${h}${h}`;
+}
+
 export function courseStyle(color: string | undefined | null): React.CSSProperties {
-  return { "--c": color ?? "#64748b" } as React.CSSProperties;
+  return { "--c": wireGray(color ?? "#64748b") } as React.CSSProperties;
 }

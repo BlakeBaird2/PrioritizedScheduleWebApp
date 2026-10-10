@@ -1,10 +1,10 @@
-# Prio.
+# SmartScheduler.
 
 Your classes, your job and the rest of your life on one calendar, and a plan for
 exactly what to work on in every free gap.
 
 Paste in calendar links from Canvas, Learning Suite, Google, Outlook or Apple.
-Prio finds your classes and assignments on its own, works out when you are free,
+SmartScheduler finds your classes and assignments on its own, works out when you are free,
 and fills that time with the work that is due soonest.
 
 No accounts, no database, no API keys, no environment variables. Anyone can open
@@ -12,15 +12,19 @@ it and start.
 
 ## Pages
 
-- **`/`** — the home page for newcomers: what Prio does, how the plan is made,
+- **`/`** — the home page for newcomers: what SmartScheduler does, how the plan is made,
   and where to find the calendar link in each app (Canvas, Learning Suite,
   Google, Outlook, Apple, scheduling apps), grouped by school, work and personal.
   It is rendered on the server, so it shows up at once and search engines can
   read it. Anyone who already has calendars in their browser skips it and goes
   straight to their plan.
-- **`/about`** — the same home page, for people who already use Prio. It never
-  skips ahead to the app; Settings → **About Prio** links to it.
-- **`/app`** — Prio itself. `/app#demo` opens it with sample data, unless that
+- **`/about`** — the same home page, for people who already use SmartScheduler. It never
+  skips ahead to the app; Settings → **About SmartScheduler** links to it.
+- **`/design`** — the design library: every component the screens are built
+  from, drawn live, with when to use it and why it exists. Code in
+  [`src/components/ui`](src/components/ui); the screen-by-screen usability review
+  is in [`DESIGN_REVIEW.md`](DESIGN_REVIEW.md).
+- **`/app`** — SmartScheduler itself. `/app#demo` opens it with sample data, unless that
   browser already has calendars of its own.
 
 ## What it does
@@ -67,7 +71,7 @@ Two steps, kept simple on purpose so you can always tell why it says what it say
 
 Every kind of work has a starting estimate (reading 30m, assignment 1h,
 project 2h, exam 3h of study). Open any item to change how long it needs, which
-is also how you tell Prio you are part-way through. Exams on a class calendar
+is also how you tell SmartScheduler you are part-way through. Exams on a class calendar
 automatically get a "Study for …" task before them.
 
 The code is in [`src/lib/planner.ts`](src/lib/planner.ts), with tests in
@@ -76,7 +80,7 @@ The code is in [`src/lib/planner.ts`](src/lib/planner.ts), with tests in
 ## Adding calendars
 
 Every calendar app can give you a private link to a calendar (called iCal, ICS or
-webcal). Prio reads that link, so it always sees the latest version.
+webcal). SmartScheduler reads that link, so it always sees the latest version.
 
 | Where | How to get the link | Notes |
 | --- | --- | --- |
@@ -89,9 +93,9 @@ webcal). Prio reads that link, so it always sees the latest version.
 
 Each calendar is either **School** (its entries become classes and assignments)
 or **Personal** (its entries only mark you as busy and never turn into homework).
-Prio picks one when you add a link and you can switch it at any time.
+SmartScheduler picks one when you add a link and you can switch it at any time.
 
-**Staying up to date.** These links are live. Prio re-reads every calendar when
+**Staying up to date.** These links are live. SmartScheduler re-reads every calendar when
 you open it, when you come back to the tab, and every 30 minutes while it's open.
 Google and Apple reflect changes within minutes; Outlook can take a few hours to
 republish.
@@ -99,10 +103,10 @@ republish.
 **If a link won't add,** the message says why and what to copy instead. The
 common one: Google's "public address" only works for calendars shared with
 everyone, so use the "Secret address in iCal format". Canvas can also label a
-class with an unhelpful code like "All Sections"; Prio looks for the real code in
+class with an unhelpful code like "All Sections"; SmartScheduler looks for the real code in
 section names, and you can tap any class under its calendar to rename it.
 
-**What a calendar link can't tell Prio.** Feeds say when work is due, not whether
+**What a calendar link can't tell SmartScheduler.** Feeds say when work is due, not whether
 you handed it in. When you first add a school calendar, anything already past due
 is assumed done (you can untick it). After that, tick things off as you finish
 them.
@@ -129,7 +133,7 @@ Canvas's API needs either a personal access token or a developer key issued by
 each school. Canvas's API policy doesn't allow an app used by many people to ask
 them for personal tokens, and developer keys have to be approved school by
 school. The Canvas **Calendar Feed** needs neither and works at every school, so
-Prio uses that. The trade-off is that Prio can't see whether something was
+SmartScheduler uses that. The trade-off is that SmartScheduler can't see whether something was
 submitted, which is why you tick things off yourself.
 
 ## Run it
@@ -143,6 +147,46 @@ npm run lint
 
 No configuration is needed. Pick **Try it with sample data** on the home page to
 see it working without any calendars.
+
+## Testing the entry states (prototype)
+
+SmartScheduler is currently styled as a **low-fidelity prototype**: greys and one accent
+colour, a sketch font, square outlined boxes, and wireframe drawings of the app (`src/components/LandingSketches.tsx`) in place of pictures.
+Every entry screen leads with the same sentence — *"See exactly what to work on
+in every free gap of your day."* — and has one primary (accent) button. The
+wireframe rules are at the end of `src/app/globals.css`; the shared pieces
+(`PrototypeNotice`, `PrototypeBadge`, `CapabilityHero`, `WirePlaceholder`) are in
+`src/components/Prototype.tsx`.
+
+What the browser stores decides which state you see (all in localStorage):
+
+| Key | Meaning |
+| --- | --- |
+| `prio:prototype-notice` | Set when the "early prototype" notice is dismissed. Missing = notice shows on the next page load. |
+| `prio:ws` | Calendars and choices. Calendars here + finished setup = returning user. |
+| `prio:ui` | Includes `setupDone`. |
+
+**Quickest way:** run `npm run dev`. A small **Dev: entry states** box sits in the
+bottom-left corner with one-click shortcuts to each state below. It only exists
+in development (`NODE_ENV=development`) and is not in production builds.
+
+**By hand** (works in any build; a private/incognito window is a clean first visit):
+
+| State | How to reach it | What to check |
+| --- | --- | --- |
+| First visit, prototype notice | New private window → `/` (or `/about`, `/app`, `/app#demo`) | Notice appears once; after **Got it** it doesn't return on refresh. **Prototype** tag in the header reopens it. |
+| Home `/` | Private window → `/` | Capability sentence is the biggest thing; **Start planning** is the only accent button. |
+| About `/about` | `/about` (never redirects) | Same, with **Open SmartScheduler** as the primary button. |
+| New user `/app` | Private window → `/app` | Onboarding: capability first; **Add calendar** is primary until a calendar is added, then **Continue**. |
+| Sample data `/app#demo` | Private window → `/app#demo` | Plan screen with the capability above the "Sample data" note; **Done** is primary. |
+| Returning user `/app` | After the demo (or real calendars), open `/app` again, or `/` (redirects to `/app`) | Plan screen, capability first, **Done** primary. |
+
+To start over without a private window, run this in the browser console, then
+reload: `Object.keys(localStorage).filter(k => k.startsWith("prio:")).forEach(k => localStorage.removeItem(k))`.
+Settings → Start over → **Remove everything** clears calendars and settings but keeps the theme and
+the prototype-notice dismissal.
+
+See [`FIVE_SECOND_TEST.md`](FIVE_SECOND_TEST.md) for the five-second test template.
 
 `npm run dev` accepts links whose site resolves to a private network address
 (common on campus Wi-Fi and VPNs). A production build refuses them unless started

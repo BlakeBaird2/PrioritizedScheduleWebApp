@@ -23,6 +23,7 @@ import type { CalEvent, Task } from "@/lib/types";
 import { applyFilters, clock, clockRange, dayKey, duration, typeIconClass, typeMeta } from "@/lib/ui";
 import { courseStyle, useApp, type CalMode } from "./context";
 import { FilterBar } from "./FilterBar";
+import { Button, SegmentedControl } from "./ui";
 
 const MODES: { id: CalMode; label: string }[] = [
   { id: "month", label: "Month" },
@@ -81,39 +82,32 @@ export function CalendarView() {
     <div className="space-y-3">
       <FilterBar />
       <div className="flex items-center gap-2 flex-wrap">
+        {/* Same order as Google and Outlook calendars: Today, back, forward, then the range. */}
         <div className="flex items-center gap-1">
-          <button type="button" className="btn btn-icon" onClick={() => step(-1)} aria-label="Previous">
-            <ChevronLeft size={16} />
-          </button>
-          <button type="button" className="btn btn-icon" onClick={() => step(1)} aria-label="Next">
-            <ChevronRight size={16} />
-          </button>
-          <button type="button" className="btn ml-1" onClick={() => setCalCursor(new Date())}>
+          <Button onClick={() => setCalCursor(new Date())} className="mr-1">
             Today
-          </button>
+          </Button>
+          <Button iconOnly icon={ChevronLeft} label={`Previous ${calMode}`} onClick={() => step(-1)} />
+          <Button iconOnly icon={ChevronRight} label={`Next ${calMode}`} onClick={() => step(1)} />
         </div>
-        <h2 className="text-base font-semibold ml-1">{title}</h2>
-        <div className="seg ml-auto">
-          {MODES.map((m) => (
-            <button key={m.id} type="button" aria-pressed={calMode === m.id} onClick={() => setCalMode(m.id)}>
-              {m.label}
-            </button>
-          ))}
-        </div>
+        <h2 className="text-lg font-bold ml-1" aria-live="polite">
+          {title}
+        </h2>
+        <SegmentedControl label="Calendar range" className="ml-auto" options={MODES} value={calMode} onChange={setCalMode} />
       </div>
 
       {calMode === "month" ? <MonthGrid data={data} /> : null}
       {calMode === "week" ? <TimeGrid days={weekDays} data={data} /> : null}
       {calMode === "day" ? <TimeGrid days={[startOfDay(calCursor)]} data={data} /> : null}
 
-      <div className="flex items-center gap-4 flex-wrap text-xs text-faint">
+      <div className="flex items-center gap-4 flex-wrap text-xs text-muted">
         {calMode !== "month" ? (
           <>
             <span className="inline-flex items-center gap-1.5">
-              <span className="w-3 h-3 event-block !rounded-[4px]" style={courseStyle("#64748b")} /> Events
+              <span className="w-3 h-3 event-block" style={courseStyle("#64748b")} /> Events and classes (busy)
             </span>
             <span className="inline-flex items-center gap-1.5">
-              <span className="w-3 h-3 rounded-[4px] plan-block" style={courseStyle("#64748b")} /> Planned work
+              <span className="w-3 h-3 plan-block" style={courseStyle("#64748b")} /> Planned work (dashed: it can move)
             </span>
           </>
         ) : (
@@ -185,12 +179,12 @@ function MonthGrid({ data }: { data: CalData }) {
               <div className="flex items-center justify-between mb-1">
                 <span
                   className={`inline-flex items-center justify-center text-xs tabular-nums ${
-                    today ? "bg-accent text-white font-semibold rounded-full w-5 h-5" : inMonth ? "text-fg" : "text-faint"
+                    today ? "bg-accent text-white font-bold w-6 h-6" : inMonth ? "text-fg" : "text-faint"
                   }`}
                 >
                   {format(d, "d")}
                 </span>
-                {events.length > 0 ? <span className="text-[10px] text-faint tabular-nums hidden sm:inline">{events.length} ev</span> : null}
+                {events.length > 0 ? <span className="text-[10px] text-muted tabular-nums hidden sm:inline">{events.length === 1 ? "1 event" : `${events.length} events`}</span> : null}
               </div>
               <div className="space-y-[3px]">
                 {shown.map((t) => {
@@ -206,7 +200,7 @@ function MonthGrid({ data }: { data: CalData }) {
                         select({ kind: "task", id: t.id });
                       }}
                       title={t.title}
-                      className={`w-full text-left flex items-center gap-1 rounded-md px-1 sm:px-1.5 py-[3px] text-[11px] leading-tight course-tint hover:brightness-95 dark:hover:brightness-110 transition ${t.done ? "opacity-45 line-through" : ""}`}
+                      className={`w-full text-left flex items-center gap-1 px-1 sm:px-1.5 py-[3px] text-[11px] leading-tight course-tint hover:brightness-95 dark:hover:brightness-110 transition ${t.done ? "opacity-45 line-through" : ""}`}
                     >
                       <meta.icon size={11} className={`shrink-0 hidden sm:block ${t.type === "exam" || t.type === "quiz" ? typeIconClass(t.type) : "course-text"}`} strokeWidth={2.5} />
                       <span className={`truncate ${t.type === "exam" ? "font-semibold" : ""}`}>{t.title}</span>
@@ -302,7 +296,11 @@ function TimeGrid({ days, data }: { days: Date[]; data: CalData }) {
                   }}
                 >
                   <span className="text-[11px] uppercase tracking-wide text-muted font-semibold">{format(c.day, "EEE")} </span>
-                  <span className={`text-sm tabular-nums ${isToday(c.day) ? "text-accent font-bold" : "font-semibold"}`}>{format(c.day, "d")}</span>
+                  <span
+                    className={`text-sm tabular-nums inline-flex items-center justify-center ${isToday(c.day) ? "bg-accent text-white font-bold w-6 h-6" : "font-semibold"}`}
+                  >
+                    {format(c.day, "d")}
+                  </span>
                 </button>
               ) : null}
               <div className="space-y-[3px] mt-0.5">
@@ -311,7 +309,7 @@ function TimeGrid({ days, data }: { days: Date[]; data: CalData }) {
                     key={e.id}
                     type="button"
                     onClick={() => select({ kind: "event", id: e.id })}
-                    className="course-chip w-full truncate text-left rounded px-1 py-px text-[10.5px] font-medium"
+                    className="course-chip w-full truncate text-left px-1 py-px text-[10.5px] font-medium"
                     style={courseStyle(e.color)}
                     title={e.title}
                   >
@@ -325,7 +323,7 @@ function TimeGrid({ days, data }: { days: Date[]; data: CalData }) {
                       key={t.id}
                       type="button"
                       onClick={() => select({ kind: "task", id: t.id })}
-                      className={`w-full flex items-center gap-1 text-left rounded px-1 py-px text-[10.5px] course-tint ${t.done ? "opacity-45 line-through" : ""}`}
+                      className={`w-full flex items-center gap-1 text-left px-1 py-px text-[10.5px] course-tint ${t.done ? "opacity-45 line-through" : ""}`}
                       style={courseStyle(course?.color)}
                       title={`Due ${t.allDay ? "today" : clock(new Date(t.dueAt!))}: ${t.title}`}
                     >
@@ -375,7 +373,7 @@ function TimeGrid({ days, data }: { days: Date[]; data: CalData }) {
                         key={item.id}
                         type="button"
                         onClick={() => select({ kind: "event", id: e.id })}
-                        className={`event-block absolute flex flex-col justify-start text-left overflow-hidden !rounded-lg px-1.5 py-1 ${e.busy ? "" : "opacity-60"}`}
+                        className={`event-block absolute flex flex-col justify-start text-left overflow-hidden px-1.5 py-1 ${e.busy ? "" : "opacity-60"}`}
                         style={{ ...style, ...courseStyle(e.color) }}
                         title={`${e.title} · ${clockRange(new Date(e.start), new Date(e.end))}`}
                       >
@@ -390,7 +388,7 @@ function TimeGrid({ days, data }: { days: Date[]; data: CalData }) {
                       key={item.id}
                       type="button"
                       onClick={() => select({ kind: "task", id: item.task.id })}
-                      className={`plan-block absolute flex flex-col justify-start text-left overflow-hidden rounded-lg px-1.5 py-1 ${item.task.done ? "opacity-50" : ""}`}
+                      className={`plan-block absolute flex flex-col justify-start text-left overflow-hidden px-1.5 py-1 ${item.task.done ? "opacity-50" : ""}`}
                       style={{ ...style, ...courseStyle(course?.color) }}
                       title={`Work on ${item.task.title} · ${duration(item.block.minutes)}`}
                     >

@@ -14,7 +14,7 @@ import { KEYS, parseJson, readStored, useStored, writeStored } from "./store";
 import { Header } from "./Header";
 import { Banners } from "./Banners";
 import { Onboarding, startDemo } from "./Onboarding";
-import { PlanView } from "./PlanView";
+import { PlanHeading, PlanView } from "./PlanView";
 import { CalendarView } from "./CalendarView";
 import { UpcomingView } from "./UpcomingView";
 import { ClassesView } from "./ClassesView";
@@ -23,6 +23,8 @@ import { DetailPanel } from "./DetailPanel";
 import { AddTaskDialog } from "./AddTaskDialog";
 import { ImportDialog } from "./ImportDialog";
 import { ClassTimesDialog } from "./ClassTimes";
+import { Toast } from "./ui";
+import { AppTour } from "./AppTour";
 
 // ---------------------------------------------------------------------------
 // Reading what the browser has stored
@@ -148,7 +150,13 @@ function takeDemoFromUrl(): Incoming | null {
 let opened: Incoming | null = null;
 
 function takeFromUrl(): Incoming {
-  opened ??= takeDemoFromUrl() ?? takeSetupFromUrl();
+  if (!opened) {
+    // Every visit opens on the Plan screen, which leads with what SmartScheduler does. The
+    // calendar mode and filters are still remembered.
+    const raw = readStored(KEYS.ui);
+    if (raw && parseUi(raw).view !== "plan") writeUi({ view: "plan" });
+    opened = takeDemoFromUrl() ?? takeSetupFromUrl();
+  }
   return opened;
 }
 
@@ -205,12 +213,13 @@ export function App() {
   const [syncing, setSyncing] = useState(false);
   const syncingRef = useRef(false);
 
-  const [toastMsg, setToastMsg] = useState<string | null>(incoming.message);
+  const [toastMsg, setToastMsg] = useState<{ message: string; undo?: () => void } | null>(incoming.message ? { message: incoming.message } : null);
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const toast = useCallback((message: string) => {
-    setToastMsg(message);
+  const toast = useCallback((message: string, options?: { undo?: () => void }) => {
+    setToastMsg({ message, undo: options?.undo });
     if (toastTimer.current) clearTimeout(toastTimer.current);
-    toastTimer.current = setTimeout(() => setToastMsg(null), 3600);
+    // Leave a little longer to read and reach Undo.
+    toastTimer.current = setTimeout(() => setToastMsg(null), options?.undo ? 6000 : 3600);
   }, []);
   useEffect(() => {
     if (!incoming.message) return;
@@ -237,7 +246,7 @@ export function App() {
 
   const saveSnapshot = useCallback(
     (s: Snapshot) => {
-      if (!writeJson(KEYS.snapshot, s)) toast("Browser storage is full, so calendars will be re-read next time you open Prio.");
+      if (!writeJson(KEYS.snapshot, s)) toast("Browser storage is full, so calendars will be re-read next time you open SmartScheduler.");
     },
     [toast],
   );
@@ -390,14 +399,18 @@ export function App() {
 
   const toggleDone = useCallback(
     (task: Task) => {
-      update((w) => {
-        const done = { ...w.done };
-        if (done[task.id]) delete done[task.id];
-        else done[task.id] = new Date().toISOString();
-        return { ...w, done };
-      });
+      const flip = () =>
+        update((w) => {
+          const done = { ...w.done };
+          if (done[task.id]) delete done[task.id];
+          else done[task.id] = new Date().toISOString();
+          return { ...w, done };
+        });
+      flip();
+      // Ticking something off moves the whole plan, so say so and offer a way back.
+      toast(task.done ? `Moved back to your plan: ${task.title}` : `Done: ${task.title}`, { undo: flip });
     },
-    [update],
+    [update, toast],
   );
 
   const setEstimate = useCallback(
@@ -485,6 +498,7 @@ export function App() {
         <div className="min-h-dvh flex flex-col">
           <Header />
           <main className="flex-1 w-full max-w-6xl mx-auto px-4 sm:px-6 pb-24">
+            {ui.view === "plan" ? <PlanHeading /> : null}
             <Banners />
             <div className="mt-4 fade-in" key={ui.view}>
               {ui.view === "plan" && <PlanView />}
@@ -497,6 +511,7 @@ export function App() {
           {selected ? <DetailPanel selection={selected} onClose={() => setSelected(null)} /> : null}
           {addOpen ? <AddTaskDialog onClose={() => setAddOpen(false)} /> : null}
           {classTimesOpen ? <ClassTimesDialog onClose={() => setClassTimesOpen(false)} /> : null}
+          <AppTour blocked={Boolean(selected || addOpen || classTimesOpen || incoming.pending)} />
         </div>
       )}
       {incoming.pending ? (
@@ -511,12 +526,14 @@ export function App() {
         />
       ) : null}
       {toastMsg ? (
-        <div
-          role="status"
-          className="fixed bottom-5 left-1/2 -translate-x-1/2 z-[60] max-w-[calc(100vw-2rem)] rounded-full bg-fg text-bg text-sm font-medium px-4 py-2 shadow-lg fade-in text-center"
-        >
-          {toastMsg}
-        </div>
+        <Toast
+          message={toastMsg.message}
+          action={toastMsg.undo ? "Undo" : undefined}
+          onAction={() => {
+            toastMsg.undo?.();
+            setToastMsg(null);
+          }}
+        />
       ) : null}
     </AppContext.Provider>
   );
