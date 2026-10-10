@@ -12,9 +12,10 @@
  * - WirePlaceholder: a grey box standing in for a picture, labelled in words.
  * - DevStateSwitcher: development-only shortcuts to each entry state.
  */
-import { useEffect, useId, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { FlaskConical } from "lucide-react";
 import { KEYS, readStored, useHydrated, useStored, writeStored } from "./store";
+import { Button, Dialog } from "./ui";
 
 export const CAPABILITY = "See exactly what to work on in every free gap of your day.";
 export const PROTOTYPE_MESSAGE = "This is an early prototype. It looks simple on purpose and some things are placeholders.";
@@ -30,8 +31,6 @@ export function PrototypeNotice() {
   const hydrated = useHydrated();
   const dismissed = useStored(KEYS.prototypeNotice);
   const [reopened, setReopened] = useState(false);
-  const titleId = useId();
-  const buttonRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
     const onOpen = () => setReopened(true);
@@ -46,45 +45,23 @@ export function PrototypeNotice() {
     setReopened(false);
   };
 
-  useEffect(() => {
-    if (!open) return;
-    const previous = document.activeElement as HTMLElement | null;
-    buttonRef.current?.focus();
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") {
-        writeStored(KEYS.prototypeNotice, new Date().toISOString());
-        setReopened(false);
-      }
-    };
-    document.addEventListener("keydown", onKey);
-    return () => {
-      document.removeEventListener("keydown", onKey);
-      previous?.focus?.();
-    };
-  }, [open]);
-
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-[80] flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-black/40" onClick={close} aria-hidden />
-      <div role="dialog" aria-modal="true" aria-labelledby={titleId} className="relative w-full max-w-md border-2 border-fg bg-surface p-6">
-        <span className="proto-badge pointer-events-none" aria-hidden>
-          <FlaskConical size={14} />
-          Prototype
-        </span>
-        <h2 id={titleId} className="mt-4 text-2xl font-bold leading-snug">
-          {PROTOTYPE_MESSAGE}
-        </h2>
-        <p className="mt-3 text-base text-muted leading-relaxed">
-          SmartScheduler still works: add your calendars or try the sample data, and it plans your free time. You can read this again any time from the{" "}
-          <b className="text-fg">Prototype</b> tag at the top.
-        </p>
-        <button ref={buttonRef} type="button" className="btn-primary mt-5 w-full" onClick={close}>
-          Got it
-        </button>
-      </div>
-    </div>
+    <Dialog elevated label="About this prototype" onClose={close} size="md" className="!p-6">
+      <span className="proto-badge pointer-events-none" aria-hidden>
+        <FlaskConical size={14} />
+        Prototype
+      </span>
+      <h2 className="mt-4 text-2xl font-bold leading-snug">{PROTOTYPE_MESSAGE}</h2>
+      <p className="mt-3 text-base text-muted leading-relaxed">
+        SmartScheduler still works: add your calendars or try the sample data, and it plans your free time. You can read this again any time from the{" "}
+        <b className="text-fg">Prototype</b> tag at the top.
+      </p>
+      <Button variant="primary" block className="mt-5" onClick={close} data-autofocus>
+        Got it
+      </Button>
+    </Dialog>
   );
 }
 

@@ -667,3 +667,122 @@
   outline: 2px solid var(--fg);
   outline-offset: 2px;
 }
+
+/* ---------------------------------------------------------------------------
+ * Design library additions (src/components/ui). Shown live at /design.
+ * ------------------------------------------------------------------------- */
+@layer components {
+  /* Low-stakes action in a dense list: no outline until you point at it. */
+  .btn-quiet {
+    border-color: transparent;
+    color: var(--muted);
+  }
+  .btn-quiet:hover {
+    color: var(--fg);
+    border-color: var(--line-strong);
+  }
+  /* Removes something. Heavier outline and a warning word, never just colour. */
+  .btn-danger {
+    border-width: 2px;
+    border-color: var(--fg);
+    font-weight: 700;
+  }
+  .btn-sm {
+    padding: 0.2rem 0.55rem;
+    font-size: 0.875rem;
+  }
+  /* An action inside a sentence looks like a link: underlined. */
+  .text-link {
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    text-decoration-thickness: 1px;
+    color: inherit;
+    cursor: pointer;
+  }
+  .text-link:hover {
+    color: var(--fg);
+    text-decoration-thickness: 2px;
+  }
+  .check-sm {
+    width: 1.25rem;
+    height: 1.25rem;
+  }
+  /* Ticked work: filled black box with a white tick. */
+  .check[aria-checked="true"] {
+    background: var(--fg);
+    border-color: var(--fg);
+    color: var(--bg);
+  }
+  .check:hover {
+    border-color: var(--fg);
+    color: var(--muted);
+  }
+  .switch[aria-checked="true"] {
+    background: var(--fg);
+  }
+  .switch::after {
+    background: var(--surface);
+  }
+}
+
+/* Fingers are bigger than cursors: on touch screens every control is at least 44px tall. */
+@media (pointer: coarse) {
+  .btn,
+  .btn-primary,
+  .seg > button,
+  .pill {
+    min-height: 44px;
+  }
+  .btn-icon {
+    min-width: 44px;
+    justify-content: center;
+  }
+  .check {
+    width: 1.75rem;
+    height: 1.75rem;
+  }
+}
+@layer components {
+  .check[aria-checked="true"]:hover {
+    color: var(--bg);
+  }
+}
+.is-syncing svg {
+  animation: spin 900ms linear infinite;
+}
+
+/* Figure and ground: a task card is a white card, so it stands out on the grey of a free gap or a list. */
+@layer components {
+  .task-card,
+  [data-theme="dark"] .task-card {
+    background: var(--surface);
+  }
+  .task-card:hover,
+  [data-theme="dark"] .task-card:hover {
+    background: var(--surface);
+    border-color: var(--fg);
+  }
+
+  /*
+   * Pills: "off" must not look disabled (no fading). Off is a plain outline with
+   * muted text; on is shaded, bold and outlined in ink.
+   */
+  .pill {
+    border-color: var(--line-strong);
+    font-size: 0.875rem;
+  }
+  .pill[aria-pressed="false"],
+  .pill[aria-pressed="false"].pill-course {
+    opacity: 1;
+    background: var(--surface);
+    color: var(--muted);
+    border-style: dashed;
+  }
+  .pill[aria-pressed="true"],
+  .pill[aria-pressed="true"].pill-course {
+    background: var(--surface-2);
+    border-color: var(--fg);
+    color: var(--fg);
+    font-weight: 700;
+  }
+}

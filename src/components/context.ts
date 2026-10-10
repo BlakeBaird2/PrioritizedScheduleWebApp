@@ -54,7 +54,8 @@ export interface AppContextValue {
   classTimesTipHidden: boolean;
   hideClassTimesTip: () => void;
   clearChanges: () => void;
-  toast: (message: string) => void;
+  /** Confirm what just happened. Pass `undo` when the action can be taken back; the message then offers Undo. */
+  toast: (message: string, options?: { undo?: () => void }) => void;
 }
 
 export const AppContext = createContext<AppContextValue | null>(null);

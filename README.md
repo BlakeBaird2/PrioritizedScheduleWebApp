@@ -20,6 +20,10 @@ it and start.
   straight to their plan.
 - **`/about`** — the same home page, for people who already use SmartScheduler. It never
   skips ahead to the app; Settings → **About SmartScheduler** links to it.
+- **`/design`** — the design library: every component the screens are built
+  from, drawn live, with when to use it and why it exists. Code in
+  [`src/components/ui`](src/components/ui); the screen-by-screen usability review
+  is in [`DESIGN_REVIEW.md`](DESIGN_REVIEW.md).
 - **`/app`** — SmartScheduler itself. `/app#demo` opens it with sample data, unless that
   browser already has calendars of its own.
 

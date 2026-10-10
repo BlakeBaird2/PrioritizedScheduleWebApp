@@ -23,6 +23,7 @@ import { DetailPanel } from "./DetailPanel";
 import { AddTaskDialog } from "./AddTaskDialog";
 import { ImportDialog } from "./ImportDialog";
 import { ClassTimesDialog } from "./ClassTimes";
+import { Toast } from "./ui";
 
 // ---------------------------------------------------------------------------
 // Reading what the browser has stored
@@ -211,12 +212,13 @@ export function App() {
   const [syncing, setSyncing] = useState(false);
   const syncingRef = useRef(false);
 
-  const [toastMsg, setToastMsg] = useState<string | null>(incoming.message);
+  const [toastMsg, setToastMsg] = useState<{ message: string; undo?: () => void } | null>(incoming.message ? { message: incoming.message } : null);
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const toast = useCallback((message: string) => {
-    setToastMsg(message);
+  const toast = useCallback((message: string, options?: { undo?: () => void }) => {
+    setToastMsg({ message, undo: options?.undo });
     if (toastTimer.current) clearTimeout(toastTimer.current);
-    toastTimer.current = setTimeout(() => setToastMsg(null), 3600);
+    // Leave a little longer to read and reach Undo.
+    toastTimer.current = setTimeout(() => setToastMsg(null), options?.undo ? 6000 : 3600);
   }, []);
   useEffect(() => {
     if (!incoming.message) return;
@@ -396,14 +398,18 @@ export function App() {
 
   const toggleDone = useCallback(
     (task: Task) => {
-      update((w) => {
-        const done = { ...w.done };
-        if (done[task.id]) delete done[task.id];
-        else done[task.id] = new Date().toISOString();
-        return { ...w, done };
-      });
+      const flip = () =>
+        update((w) => {
+          const done = { ...w.done };
+          if (done[task.id]) delete done[task.id];
+          else done[task.id] = new Date().toISOString();
+          return { ...w, done };
+        });
+      flip();
+      // Ticking something off moves the whole plan, so say so and offer a way back.
+      toast(task.done ? `Moved back to your plan: ${task.title}` : `Done: ${task.title}`, { undo: flip });
     },
-    [update],
+    [update, toast],
   );
 
   const setEstimate = useCallback(
@@ -518,12 +524,14 @@ export function App() {
         />
       ) : null}
       {toastMsg ? (
-        <div
-          role="status"
-          className="fixed bottom-5 left-1/2 -translate-x-1/2 z-[60] max-w-[calc(100vw-2rem)] rounded-full bg-fg text-bg text-sm font-medium px-4 py-2 shadow-lg fade-in text-center"
-        >
-          {toastMsg}
-        </div>
+        <Toast
+          message={toastMsg.message}
+          action={toastMsg.undo ? "Undo" : undefined}
+          onAction={() => {
+            toastMsg.undo?.();
+            setToastMsg(null);
+          }}
+        />
       ) : null}
     </AppContext.Provider>
   );

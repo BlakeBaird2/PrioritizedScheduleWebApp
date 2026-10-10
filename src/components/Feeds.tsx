@@ -8,6 +8,7 @@ import type { FeedConfig, FeedResult, FeedRole, Provider } from "@/lib/types";
 import { plural, timeAgo } from "@/lib/ui";
 import { courseStyle, useApp, wireGray } from "./context";
 import { LINK_HELP } from "./calendarGuide";
+import { Button } from "./ui";
 
 /** What a calendar contributed, in a few words. */
 export function feedSummary(result: FeedResult | null | undefined, role: FeedRole): string {
@@ -90,10 +91,9 @@ export function FeedAdder({ autoFocus = false, primary = true }: { autoFocus?: b
             disabled={busy}
           />
         </label>
-        <button type="submit" className={`${primary ? "btn-primary" : "btn"} shrink-0`} disabled={busy || !value.trim()}>
-          <Plus size={16} strokeWidth={2.5} aria-hidden />
+        <Button type="submit" variant={primary ? "primary" : "secondary"} icon={Plus} className="shrink-0" disabled={busy || !value.trim()}>
           {busy ? "Reading…" : "Add calendar"}
-        </button>
+        </Button>
       </div>
       {error ? (
         <p className="text-sm text-danger flex gap-1.5" role="alert">
@@ -101,7 +101,11 @@ export function FeedAdder({ autoFocus = false, primary = true }: { autoFocus?: b
           <span>{error}</span>
         </p>
       ) : null}
-      {added ? <p className="text-sm text-ok" role="status">{added}</p> : null}
+      {added ? (
+        <p className="text-sm font-semibold" role="status">
+          {added}
+        </p>
+      ) : null}
     </form>
   );
 }
@@ -134,9 +138,9 @@ export function FeedList({ manage = false }: { manage?: boolean }) {
       {ws.feeds.map((feed) => {
         const state = snapshot.feeds[feed.id];
         return (
-          <li key={feed.id} className={`rounded-xl border border-line bg-surface px-3 py-2.5 ${feed.enabled ? "" : "opacity-60"}`}>
+          <li key={feed.id} className={`border border-line-strong bg-surface px-3 py-2.5 ${feed.enabled ? "" : "opacity-60"}`}>
             <div className="flex items-center gap-2.5 flex-wrap">
-              <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: feed.role === "personal" ? wireGray(feed.color) : "var(--accent)" }} />
+              <span className="w-2.5 h-2.5 shrink-0 border border-line-strong" style={{ background: feed.role === "personal" ? wireGray(feed.color) : "var(--fg)" }} aria-hidden />
               <div className="min-w-0 flex-1">
                 <div className="text-sm font-medium truncate" title={feed.name}>
                   {feed.name}
@@ -151,27 +155,22 @@ export function FeedList({ manage = false }: { manage?: boolean }) {
               </div>
               <RoleSwitch feed={feed} />
               {manage ? (
-                <button
-                  type="button"
-                  className="btn btn-icon"
-                  title={feed.enabled ? "Turn off for now" : "Turn back on"}
-                  aria-label={feed.enabled ? `Turn off ${feed.name}` : `Turn on ${feed.name}`}
+                <Button
+                  iconOnly
+                  icon={feed.enabled ? Eye : EyeOff}
+                  label={feed.enabled ? `Turn off ${feed.name} for now` : `Turn ${feed.name} back on`}
+                  aria-pressed={!feed.enabled}
                   onClick={() => update((w) => ({ ...w, feeds: w.feeds.map((f) => (f.id === feed.id ? { ...f, enabled: !f.enabled } : f)) }))}
-                >
-                  {feed.enabled ? <Eye size={15} /> : <EyeOff size={15} />}
-                </button>
+                />
               ) : null}
-              <button
-                type="button"
-                className="btn btn-icon"
-                title="Remove"
-                aria-label={`Remove ${feed.name}`}
+              <Button
+                iconOnly
+                icon={Trash}
+                label={`Remove ${feed.name}`}
                 onClick={() => {
                   if (!manage || window.confirm(`Remove ${feed.name}? Its classes and work leave your plan.`)) removeFeed(feed.id);
                 }}
-              >
-                <Trash size={15} />
-              </button>
+              />
             </div>
             {feed.role === "school" ? <ClassChips feedId={feed.id} /> : null}
             {state?.error ? (
@@ -260,7 +259,7 @@ export function ProviderHelp() {
   const [tab, setTab] = useState<Provider>("canvas");
   const current = LINK_HELP.find((h) => h.id === tab)!;
   return (
-    <div className="rounded-xl border border-line bg-surface-2/50 p-3">
+    <div className="border border-line-strong bg-surface-2 p-3">
       <div className="text-xs font-semibold text-muted uppercase tracking-wide mb-2">Where do I find my link?</div>
       <div className="flex flex-wrap gap-1.5 mb-3">
         {LINK_HELP.map((h) => (

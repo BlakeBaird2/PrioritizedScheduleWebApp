@@ -14,6 +14,7 @@ import Link from "next/link";
 import { ArrowRight, Bell, Check, CircleAlert, GraduationCap, Lock, Plus, RefreshCw, SlidersHorizontal, Sparkles, Target } from "lucide-react";
 import { LinkGuide } from "./LinkGuide";
 import { CapabilityHero, PrototypeBadge, WirePlaceholder } from "./Prototype";
+import { ButtonLink, Wordmark } from "./ui";
 
 const WRAP = "max-w-6xl mx-auto px-4 sm:px-6";
 
@@ -50,10 +51,9 @@ function SampleLink({ className, children = "Try it with sample data" }: { class
 /** Opens the app. Only the hero's copy is `primary`; repeats further down are quieter. */
 function StartLink({ children = "Start planning", primary = false }: { children?: React.ReactNode; primary?: boolean }) {
   return (
-    <Link href="/app" className={primary ? "btn-primary btn-lg" : "btn btn-lg"}>
+    <ButtonLink href="/app" variant={primary ? "primary" : "secondary"} size="lg" trailingIcon={ArrowRight}>
       {children}
-      <ArrowRight size={18} />
-    </Link>
+    </ButtonLink>
   );
 }
 
@@ -75,8 +75,8 @@ function Nav() {
   return (
     <header className="sticky top-0 z-30 border-b border-line-strong bg-bg">
       <div className={`${WRAP} flex h-14 items-center gap-3 sm:gap-6`}>
-        <a href="#top" className="wordmark text-xl select-none" aria-label="SmartScheduler, back to top">
-          SmartScheduler<span className="text-accent">.</span>
+        <a href="#top" className="shrink-0" aria-label="SmartScheduler, back to top">
+          <Wordmark />
         </a>
         <PrototypeBadge />
         <nav aria-label="On this page" className="hidden items-center gap-6 text-base text-muted md:flex">
@@ -91,9 +91,9 @@ function Nav() {
           </a>
         </nav>
         {/* Quiet on purpose: the hero holds this screen's one primary button. */}
-        <Link href="/app" className="btn ml-auto">
+        <ButtonLink href="/app" className="ml-auto">
           Open SmartScheduler
-        </Link>
+        </ButtonLink>
       </div>
     </header>
   );
@@ -376,9 +376,7 @@ function Footer() {
     <footer className="border-t border-line-strong">
       <div className={`${WRAP} flex flex-col gap-6 py-10 sm:flex-row sm:items-center sm:justify-between`}>
         <div>
-          <div className="wordmark text-lg select-none">
-            SmartScheduler<span className="text-accent">.</span>
-          </div>
+          <Wordmark />
           <p className="mt-1 text-sm text-muted">One calendar for school, work and life, with a plan for every gap. An early prototype.</p>
         </div>
         <nav aria-label="Footer" className="flex flex-wrap gap-x-6 gap-y-2 text-sm text-muted">
@@ -391,6 +389,9 @@ function Footer() {
           <a href="#faq" className="hover:text-fg">
             FAQ
           </a>
+          <Link href="/design" className="hover:text-fg">
+            Design library
+          </Link>
           <Link href="/app" className="hover:text-fg">
             Open SmartScheduler
           </Link>

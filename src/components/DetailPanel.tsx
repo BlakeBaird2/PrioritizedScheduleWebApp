@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { differenceInCalendarDays, format } from "date-fns";
-import { ArrowRight, CircleAlert, Clock3, ExternalLink, MapPin, Pencil, Trash, X } from "lucide-react";
+import { ArrowRight, Check, CircleAlert, Clock3, ExternalLink, MapPin, Pencil, Trash, Undo2, X } from "lucide-react";
 import { PROVIDER_LABEL } from "@/lib/feeds/url";
 import { parseWeeklyId } from "@/lib/model";
 import { daysLabel, meetingKey, meetingPatterns } from "@/lib/meetings";
@@ -10,19 +10,11 @@ import type { CalEvent, Task } from "@/lib/types";
 import { clockRange, dueDate, duration, relativeDue, typeMeta } from "@/lib/ui";
 import { courseStyle, useApp, type Selection } from "./context";
 import { DoneToggle } from "./TaskRow";
-import { TypeChip } from "./TypeChip";
+import { Button, buttonClass, ChoicePill, ClassChip, Dialog, SectionLabel, TextButton, TypeChip } from "./ui";
 import { ClassTimeForm, useClassTimeActions, valuesFromBlock, valuesFromPattern } from "./ClassTimes";
 
 export function DetailPanel({ selection, onClose }: { selection: NonNullable<Selection>; onClose: () => void }) {
   const { model } = useApp();
-
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [onClose]);
 
   const task = selection.kind === "task" ? model.tasks.find((t) => t.id === selection.id) : undefined;
   const event = selection.kind === "event" ? model.events.find((e) => e.id === selection.id) : undefined;
@@ -30,31 +22,20 @@ export function DetailPanel({ selection, onClose }: { selection: NonNullable<Sel
   const color = task ? (task.courseId ? model.courseById.get(task.courseId)?.color : undefined) : event?.color;
 
   return (
-    <>
-      <div className="fixed inset-0 bg-black/25 z-40 fade-in" onClick={onClose} aria-hidden />
-      <aside
-        role="dialog"
-        aria-modal="true"
-        aria-label={task?.title ?? event?.title}
-        style={courseStyle(color)}
-        className="panel-enter fixed z-50 bg-surface border-line shadow-xl flex flex-col
-                   inset-x-0 bottom-0 max-h-[85dvh] rounded-t-2xl border-t
-                   md:inset-y-0 md:right-0 md:left-auto md:w-[26rem] md:max-h-none md:rounded-none md:border-l md:border-t-0"
-      >
-        {task ? <TaskDetail task={task} onClose={onClose} /> : <EventDetail event={event!} onClose={onClose} />}
-      </aside>
-    </>
+    <Dialog placement="side" label={task?.title ?? event?.title} onClose={onClose} style={courseStyle(color)}>
+      {task ? <TaskDetail task={task} onClose={onClose} /> : <EventDetail event={event!} onClose={onClose} />}
+    </Dialog>
   );
 }
 
 function Label({ children }: { children: React.ReactNode }) {
-  return <div className="section-title mb-1">{children}</div>;
+  return <SectionLabel className="mb-1">{children}</SectionLabel>;
 }
 
 const ESTIMATES = [15, 30, 45, 60, 90, 120, 180, 240, 360];
 
 function TaskDetail({ task, onClose }: { task: Task; onClose: () => void }) {
-  const { model, index, now, changes, ws, setEstimate, update, setView, setPlanDay } = useApp();
+  const { model, index, now, changes, ws, setEstimate, update, setView, setPlanDay, toggleDone, toast } = useApp();
   const course = task.courseId ? model.courseById.get(task.courseId) : undefined;
   const feed = task.feedId ? model.feedById.get(task.feedId) : undefined;
   const d = dueDate(task);
@@ -79,21 +60,23 @@ function TaskDetail({ task, onClose }: { task: Task; onClose: () => void }) {
           <h2 className={`font-semibold leading-snug ${task.done ? "line-through text-muted" : ""}`}>{task.title}</h2>
           <div className="mt-1.5 flex items-center gap-2 flex-wrap">
             {course ? (
-              <span className="inline-flex items-center gap-1.5 text-xs">
-                <span className="course-dot" />
-                <span className="course-text font-medium">{course.code}</span>
+              <span className="text-xs">
+                <ClassChip code={course.code} color={course.color} title={course.title} />
               </span>
             ) : null}
             <TypeChip type={task.type} />
             {task.generated === "study" ? <span className="text-xs text-muted">Study time added by SmartScheduler</span> : null}
           </div>
         </div>
-        <button type="button" className="btn btn-icon" onClick={onClose} aria-label="Close">
-          <X size={16} />
-        </button>
+        <Button iconOnly icon={X} label="Close" onClick={onClose} data-dialog-close="true" />
       </header>
 
       <div className="p-4 space-y-5 overflow-y-auto scrollbar-thin">
+        {/* The same main action as the Plan screen's Done button, so finishing work looks the same everywhere. */}
+        <Button variant={task.done ? "secondary" : "primary"} block icon={task.done ? Undo2 : Check} onClick={() => toggleDone(task)}>
+          {task.done ? "Mark as not done" : "Mark as done"}
+        </Button>
+
         <div>
           <Label>Due</Label>
           <div className={`text-[0.9375rem] font-medium ${overdue ? "text-danger" : ""}`}>
@@ -106,18 +89,18 @@ function TaskDetail({ task, onClose }: { task: Task; onClose: () => void }) {
           <Label>Time it needs</Label>
           <div className="flex flex-wrap gap-1.5">
             {options.map((m) => (
-              <button key={m} type="button" className="pill" aria-pressed={task.estimate === m} onClick={() => setEstimate(task.id, m === typeDefault ? null : m)}>
+              <ChoicePill key={m} selected={task.estimate === m} onClick={() => setEstimate(task.id, m === typeDefault ? null : m)}>
                 {duration(m)}
-              </button>
+              </ChoicePill>
             ))}
           </div>
           <p className="mt-1.5 text-xs text-muted">
             {task.customEstimate ? (
               <>
                 Set by you.{" "}
-                <button type="button" className="underline underline-offset-2 hover:text-fg" onClick={() => setEstimate(task.id, null)}>
+                <TextButton onClick={() => setEstimate(task.id, null)}>
                   Use the {typeMeta(task.type).label.toLowerCase()} default ({duration(typeDefault)})
-                </button>
+                </TextButton>
               </>
             ) : (
               `The default for ${typeMeta(task.type).plural.toLowerCase()}. Part-way through? Lower it to what's left.`
@@ -135,21 +118,21 @@ function TaskDetail({ task, onClose }: { task: Task; onClose: () => void }) {
                     <button
                       type="button"
                       onClick={() => openDay(b.start)}
-                      className="w-full text-left flex items-center gap-2 rounded-lg border border-line px-2.5 py-1.5 text-sm hover:bg-surface-2 transition"
+                      className="w-full text-left flex items-center gap-2 border border-line-strong px-2.5 py-2 text-sm hover:bg-surface-2 transition"
                     >
-                      <Clock3 size={14} className="text-accent shrink-0" />
+                      <Clock3 size={14} className="shrink-0" aria-hidden />
                       <span className="flex-1 min-w-0">
                         {format(b.start, "EEE, MMM d")} · {clockRange(b.start, b.end)}
                       </span>
                       <span className="text-xs text-muted tabular-nums">{duration(b.minutes)}</span>
-                      <ArrowRight size={13} className="text-faint" />
+                      <ArrowRight size={13} className="text-muted" aria-label="Open this day in your plan" />
                     </button>
                   </li>
                 ))}
               </ul>
             ) : null}
             {risk ? (
-              <p className="mt-2 text-sm text-danger flex gap-1.5">
+              <p className="mt-2 text-sm text-danger font-semibold flex gap-1.5">
                 <CircleAlert size={15} className="shrink-0 mt-0.5" />
                 {risk.planned > 0
                   ? `Only ${duration(risk.planned)} of free time before it's due. ${duration(risk.shortBy)} won't fit.`
@@ -164,7 +147,7 @@ function TaskDetail({ task, onClose }: { task: Task; onClose: () => void }) {
             ) : null}
           </div>
         ) : (
-          <p className="text-sm text-ok font-medium">Done{ws.done[task.id] ? ` · ${format(new Date(ws.done[task.id]), "MMM d, h:mm a")}` : ""}</p>
+          <p className="text-sm font-semibold">Done{ws.done[task.id] ? ` · ${format(new Date(ws.done[task.id]), "MMM d, h:mm a")}` : ""}</p>
         )}
 
         {task.description ? (
@@ -198,28 +181,30 @@ function TaskDetail({ task, onClose }: { task: Task; onClose: () => void }) {
         ) : null}
 
         {task.url ? (
-          <a href={task.url} target="_blank" rel="noreferrer" className="btn w-full justify-center">
+          <a href={task.url} target="_blank" rel="noreferrer" className={buttonClass({ block: true })}>
             Open in {feed && feed.provider !== "other" ? PROVIDER_LABEL[feed.provider] : "the class site"}
             <ExternalLink size={14} />
           </a>
         ) : null}
 
         {task.manual ? (
-          <button
-            type="button"
-            className="btn w-full justify-center text-danger"
+          <Button
+            variant="danger"
+            block
+            icon={Trash}
             onClick={() => {
               const id = task.id.replace(/^manual:/, "");
+              const removed = ws.manualTasks.find((m) => m.id === id);
               update((w) => ({ ...w, manualTasks: w.manualTasks.filter((m) => m.id !== id) }));
               onClose();
+              if (removed) toast(`Deleted: ${task.title}`, { undo: () => update((w) => ({ ...w, manualTasks: [...w.manualTasks, removed] })) });
             }}
           >
-            <Trash size={14} />
             Delete this task
-          </button>
+          </Button>
         ) : null}
 
-        <p className="text-[11px] text-faint">{task.manual ? "Added by you." : `From ${feed?.name ?? "a calendar"}.`}</p>
+        <p className="text-xs text-muted">{task.manual ? "Added by you." : `From ${feed?.name ?? "a calendar"}.`}</p>
       </div>
     </>
   );
@@ -265,9 +250,7 @@ function EventDetail({ event, onClose }: { event: CalEvent; onClose: () => void 
             {course && course.code !== event.title ? <span className="course-text font-medium"> · {course.code}</span> : feed ? ` · ${feed.name}` : ""}
           </div>
         </div>
-        <button type="button" className="btn btn-icon" onClick={onClose} aria-label="Close">
-          <X size={16} />
-        </button>
+        <Button iconOnly icon={X} label="Close" onClick={onClose} data-dialog-close="true" />
       </header>
       <div className="p-4 space-y-5 overflow-y-auto scrollbar-thin">
         <div>
@@ -309,20 +292,18 @@ function EventDetail({ event, onClose }: { event: CalEvent; onClose: () => void 
               />
             </div>
           ) : (
-            <button type="button" className="btn-primary w-full" onClick={() => setEditing(true)}>
-              <Pencil size={15} />
+            <Button variant="primary" block icon={Pencil} onClick={() => setEditing(true)}>
               Change class time
-            </button>
+            </Button>
           )
         ) : null}
         {weekly ? (
           <div className="space-y-2">
-            <button type="button" className="btn w-full justify-center" onClick={skipDay}>
+            <Button block onClick={skipDay}>
               Not happening on {format(start, "EEE, MMM d")}
-            </button>
-            <button
-              type="button"
-              className="btn w-full justify-center"
+            </Button>
+            <Button
+              block
               onClick={() => {
                 onClose();
                 if (event.courseId) openClassTimes();
@@ -330,11 +311,11 @@ function EventDetail({ event, onClose }: { event: CalEvent; onClose: () => void 
               }}
             >
               {event.courseId ? "All class times" : "Change weekly busy times"}
-            </button>
+            </Button>
           </div>
         ) : null}
         {event.url ? (
-          <a href={event.url} target="_blank" rel="noreferrer" className="btn w-full justify-center">
+          <a href={event.url} target="_blank" rel="noreferrer" className={buttonClass({ block: true })}>
             Open link
             <ExternalLink size={14} />
           </a>
