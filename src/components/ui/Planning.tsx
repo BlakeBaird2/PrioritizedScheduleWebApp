@@ -110,10 +110,30 @@ export function TaskCard({
  * core idea made visible: the gap's length is the headline, the work that fits
  * sits inside it, and any time left over is said out loud.
  */
-export function FreeGapBlock({ minutes, label, note, children }: { minutes: number; label: string; note?: React.ReactNode; children?: React.ReactNode }) {
+export function FreeGapBlock({
+  minutes,
+  label,
+  note,
+  children,
+  onOpen,
+}: {
+  minutes: number;
+  label: string;
+  note?: React.ReactNode;
+  children?: React.ReactNode;
+  /** Opens free-gap details (Plan / Calendar goal route). */
+  onOpen?: () => void;
+}) {
   return (
     <div className="border-2 border-dashed border-line-strong bg-surface-2 p-2 sm:p-2.5" aria-label={`${label}, ${minutes} minutes`}>
-      <div className="px-1 pt-0.5 text-sm font-bold">{label}</div>
+      {onOpen ? (
+        <button type="button" className="px-1 pt-0.5 text-sm font-bold text-left w-full hover:underline underline-offset-2" onClick={onOpen}>
+          {label}
+          <span className="ml-2 text-xs font-normal text-muted">Open gap</span>
+        </button>
+      ) : (
+        <div className="px-1 pt-0.5 text-sm font-bold">{label}</div>
+      )}
       {children ? <ul className="mt-2 space-y-1.5">{children}</ul> : null}
       {note ? <p className="mt-1.5 px-1 text-xs text-muted">{note}</p> : null}
     </div>

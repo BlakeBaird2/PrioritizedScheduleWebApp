@@ -2,10 +2,11 @@
 
 import { useMemo, useState } from "react";
 import { differenceInCalendarDays, format } from "date-fns";
-import { ArrowRight, Check, CircleAlert, Clock3, ExternalLink, MapPin, Pencil, Trash, Undo2, X } from "lucide-react";
+import { ArrowLeft, ArrowRight, Check, CircleAlert, Clock3, ExternalLink, HelpCircle, MapPin, Pencil, Trash, Undo2, X } from "lucide-react";
 import { PROVIDER_LABEL } from "@/lib/feeds/url";
 import { parseWeeklyId } from "@/lib/model";
 import { daysLabel, meetingKey, meetingPatterns } from "@/lib/meetings";
+import { buildDaySchedule } from "@/lib/timeline";
 import type { CalEvent, Task } from "@/lib/types";
 import { clockRange, dueDate, duration, relativeDue, typeMeta } from "@/lib/ui";
 import { courseStyle, useApp, type Selection } from "./context";
@@ -16,14 +17,37 @@ import { ClassTimeForm, useClassTimeActions, valuesFromBlock, valuesFromPattern 
 export function DetailPanel({ selection, onClose }: { selection: NonNullable<Selection>; onClose: () => void }) {
   const { model } = useApp();
 
-  const task = selection.kind === "task" ? model.tasks.find((t) => t.id === selection.id) : undefined;
+  const task =
+    selection.kind === "task" || selection.kind === "why" || selection.kind === "completed"
+      ? model.tasks.find((t) => t.id === selection.id)
+      : undefined;
   const event = selection.kind === "event" ? model.events.find((e) => e.id === selection.id) : undefined;
-  if (!task && !event) return null;
   const color = task ? (task.courseId ? model.courseById.get(task.courseId)?.color : undefined) : event?.color;
 
+  let body: React.ReactNode = null;
+  let label = "Details";
+  if (selection.kind === "gap") {
+    body = <GapDetail startMs={selection.startMs} onClose={onClose} />;
+    label = "Free time";
+  } else if (selection.kind === "why" && task) {
+    body = <WhyDetail task={task} onClose={onClose} />;
+    label = `Why: ${task.title}`;
+  } else if (selection.kind === "completed" && task) {
+    body = <CompletedDetail task={task} onClose={onClose} />;
+    label = "Marked done";
+  } else if (selection.kind === "task" && task) {
+    body = <TaskDetail task={task} onClose={onClose} />;
+    label = task.title;
+  } else if (selection.kind === "event" && event) {
+    body = <EventDetail event={event} onClose={onClose} />;
+    label = event.title;
+  } else {
+    return null;
+  }
+
   return (
-    <Dialog placement="side" label={task?.title ?? event?.title} onClose={onClose} style={courseStyle(color)}>
-      {task ? <TaskDetail task={task} onClose={onClose} /> : <EventDetail event={event!} onClose={onClose} />}
+    <Dialog placement="side" label={label} onClose={onClose} style={courseStyle(color)}>
+      {body}
     </Dialog>
   );
 }
@@ -35,7 +59,7 @@ function Label({ children }: { children: React.ReactNode }) {
 const ESTIMATES = [15, 30, 45, 60, 90, 120, 180, 240, 360];
 
 function TaskDetail({ task, onClose }: { task: Task; onClose: () => void }) {
-  const { model, index, now, changes, ws, setEstimate, update, setView, setPlanDay, toggleDone, toast } = useApp();
+  const { model, index, now, changes, ws, setEstimate, update, setView, setPlanDay, toggleDone, select, completeTask, toast } = useApp();
   const course = task.courseId ? model.courseById.get(task.courseId) : undefined;
   const feed = task.feedId ? model.feedById.get(task.feedId) : undefined;
   const d = dueDate(task);
@@ -45,6 +69,7 @@ function TaskDetail({ task, onClose }: { task: Task; onClose: () => void }) {
   const history = useMemo(() => changes.filter((c) => c.taskId === task.id).slice(0, 6), [changes, task.id]);
   const typeDefault = ws.prefs.estimates[task.type];
   const options = [...new Set([...ESTIMATES, task.estimate])].sort((a, b) => a - b);
+  const rank = index.rank.get(task.id);
 
   const openDay = (date: Date) => {
     setPlanDay(differenceInCalendarDays(date, now));
@@ -73,9 +98,21 @@ function TaskDetail({ task, onClose }: { task: Task; onClose: () => void }) {
 
       <div className="p-4 space-y-5 overflow-y-auto scrollbar-thin">
         {/* The same main action as the Plan screen's Done button, so finishing work looks the same everywhere. */}
-        <Button variant={task.done ? "secondary" : "primary"} block icon={task.done ? Undo2 : Check} onClick={() => toggleDone(task)}>
-          {task.done ? "Mark as not done" : "Mark as done"}
-        </Button>
+        <div className="flex flex-col gap-2">
+          <Button
+            variant={task.done ? "secondary" : "primary"}
+            block
+            icon={task.done ? Undo2 : Check}
+            onClick={() => (task.done ? toggleDone(task) : completeTask(task))}
+          >
+            {task.done ? "Mark as not done" : "Mark as done"}
+          </Button>
+          {!task.done ? (
+            <Button icon={HelpCircle} block onClick={() => select({ kind: "why", id: task.id })}>
+              Why this task?
+            </Button>
+          ) : null}
+        </div>
 
         <div>
           <Label>Due</Label>
@@ -83,6 +120,7 @@ function TaskDetail({ task, onClose }: { task: Task; onClose: () => void }) {
             {d ? `${format(d, "EEEE, MMMM d")}${task.allDay ? "" : ` at ${format(d, "h:mm a")}`}` : "No due date"}
           </div>
           {d ? <div className="text-xs text-muted mt-0.5">{relativeDue(d, now)}</div> : null}
+          {rank ? <div className="text-xs text-muted mt-0.5">Priority #{rank} among unfinished work (soonest deadline first).</div> : null}
         </div>
 
         <div>
@@ -320,6 +358,274 @@ function EventDetail({ event, onClose }: { event: CalEvent; onClose: () => void 
             <ExternalLink size={14} />
           </a>
         ) : null}
+      </div>
+    </>
+  );
+}
+
+function GapDetail({ startMs, onClose }: { startMs: number; onClose: () => void }) {
+  const { plan, model, select, completeTask, setView, setPlanDay, now } = useApp();
+  let found: {
+    dayIndex: number;
+    day: (typeof plan.days)[number];
+    gap: Extract<ReturnType<typeof buildDaySchedule>["items"][number], { kind: "free" }>;
+  } | null = null;
+  for (let i = 0; i < plan.days.length; i++) {
+    const day = plan.days[i];
+    const schedule = buildDaySchedule(day.date, day, model.events, model.tasks);
+    const gap = schedule.items.find((it) => it.kind === "free" && it.start.getTime() <= startMs && it.end.getTime() > startMs);
+    if (gap && gap.kind === "free") {
+      found = { dayIndex: i, day, gap };
+      break;
+    }
+  }
+
+  if (!found) {
+    return (
+      <>
+        <header className="flex items-center gap-3 p-4 border-b border-line">
+          <h2 className="font-semibold flex-1">Free time</h2>
+          <Button iconOnly icon={X} label="Close" onClick={onClose} data-dialog-close="true" />
+        </header>
+        <div className="p-4 space-y-3">
+          <p className="text-sm text-muted">This free gap is no longer on your plan (the day may have moved on).</p>
+          <Button block onClick={onClose}>
+            Close
+          </Button>
+        </div>
+      </>
+    );
+  }
+
+  const { dayIndex, day, gap } = found;
+
+  return (
+    <>
+      <header className="flex items-start gap-3 p-4 border-b border-line">
+        <div className="min-w-0 flex-1">
+          <h2 className="font-semibold">Free · {duration(gap.minutes)}</h2>
+          <p className="mt-1 text-sm text-muted">
+            {format(day.date, "EEEE, MMM d")} · {clockRange(gap.start, gap.end)}
+          </p>
+        </div>
+        <Button iconOnly icon={X} label="Close" onClick={onClose} data-dialog-close="true" />
+      </header>
+      <div className="p-4 space-y-4 overflow-y-auto scrollbar-thin">
+        <p className="text-sm text-muted leading-relaxed">
+          SmartScheduler fills this gap with unfinished work that is due soonest and that fits. Open a task, review it, then mark it done.
+        </p>
+        {gap.work.length === 0 ? (
+          <p className="text-sm text-muted">Nothing due soon fits here. Enjoy the break, or pick work from Upcoming or Classes.</p>
+        ) : (
+          <ul className="space-y-2">
+            {gap.work.map((w) => {
+              const course = w.task.courseId ? model.courseById.get(w.task.courseId) : undefined;
+              return (
+                <li key={`${w.task.id}:${w.block.part}`} className="border border-line-strong p-3 space-y-2" style={courseStyle(course?.color)}>
+                  <button type="button" className="text-left w-full" onClick={() => select({ kind: "task", id: w.task.id })}>
+                    <div className="font-semibold leading-snug">{w.task.title}</div>
+                    <div className="mt-1 text-xs text-muted flex flex-wrap gap-x-2">
+                      {course ? <ClassChip code={course.code} color={course.color} /> : null}
+                      <span>{duration(w.block.minutes)}</span>
+                      {w.task.dueAt ? <span>{relativeDue(new Date(w.task.dueAt), now)}</span> : null}
+                    </div>
+                  </button>
+                  <div className="flex flex-wrap gap-2">
+                    <Button size="sm" onClick={() => select({ kind: "why", id: w.task.id })}>
+                      Why this task?
+                    </Button>
+                    <Button size="sm" variant="primary" className="ml-auto" icon={Check} onClick={() => completeTask(w.task)}>
+                      Done
+                    </Button>
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
+        )}
+        {gap.leftover >= 15 ? <p className="text-xs text-muted">{duration(gap.leftover)} of this gap stays free.</p> : null}
+        <div className="flex flex-wrap gap-2 pt-1">
+          <Button
+            onClick={() => {
+              setPlanDay(dayIndex);
+              setView("plan");
+              onClose();
+            }}
+          >
+            Back to Plan
+          </Button>
+          <Button
+            onClick={() => {
+              setView("upcoming");
+              onClose();
+            }}
+          >
+            Upcoming
+          </Button>
+        </div>
+      </div>
+    </>
+  );
+}
+
+function WhyDetail({ task, onClose }: { task: Task; onClose: () => void }) {
+  const { model, index, plan, select, setView } = useApp();
+  const course = task.courseId ? model.courseById.get(task.courseId) : undefined;
+  const rank = index.rank.get(task.id);
+  const blocks = index.blocks.get(task.id) ?? [];
+  const risk = index.atRisk.get(task.id);
+  const ahead = rank
+    ? plan.order
+        .slice(0, rank - 1)
+        .map((id) => model.tasks.find((t) => t.id === id))
+        .filter((t): t is Task => Boolean(t))
+        .slice(0, 3)
+    : [];
+
+  return (
+    <>
+      <header className="flex items-start gap-3 p-4 border-b border-line">
+        <Button iconOnly icon={ArrowLeft} label="Back to task" onClick={() => select({ kind: "task", id: task.id })} />
+        <div className="min-w-0 flex-1">
+          <h2 className="font-semibold leading-snug">Why this task?</h2>
+          <p className="mt-1 text-sm text-muted truncate">{task.title}</p>
+        </div>
+        <Button iconOnly icon={X} label="Close" onClick={onClose} data-dialog-close="true" />
+      </header>
+      <div className="p-4 space-y-4 overflow-y-auto scrollbar-thin">
+        <p className="text-sm leading-relaxed">
+          SmartScheduler plans unfinished work by <b className="font-semibold">soonest deadline first</b>, into free gaps that are long enough. Quizzes are
+          not split; longer work can be.
+        </p>
+        <ul className="space-y-2 text-sm">
+          <li className="border border-line p-3">
+            <SectionLabel className="mb-1">Priority</SectionLabel>
+            {rank ? (
+              <p>
+                #{rank} of {plan.order.length} unfinished items
+                {course ? (
+                  <>
+                    {" "}
+                    · <ClassChip code={course.code} color={course.color} />
+                  </>
+                ) : null}
+              </p>
+            ) : (
+              <p className="text-muted">Not in the current plan window (already done, too far out, or filtered).</p>
+            )}
+          </li>
+          <li className="border border-line p-3">
+            <SectionLabel className="mb-1">Due</SectionLabel>
+            <p>{task.dueAt ? format(new Date(task.dueAt), "EEEE, MMM d · h:mm a") : "No due date — planned after dated work"}</p>
+          </li>
+          <li className="border border-line p-3">
+            <SectionLabel className="mb-1">Fits in free time</SectionLabel>
+            {blocks.length > 0 ? (
+              <ul className="space-y-1">
+                {blocks.map((b) => (
+                  <li key={b.part}>
+                    {format(b.start, "EEE MMM d")} · {clockRange(b.start, b.end)} · {duration(b.minutes)}
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="text-muted">No free gap holds it before the due time.</p>
+            )}
+            {risk ? (
+              <p className="mt-2 text-danger flex gap-1.5">
+                <CircleAlert size={15} className="shrink-0 mt-0.5" />
+                Short by {duration(risk.shortBy)} before it is due.
+              </p>
+            ) : null}
+          </li>
+          {ahead.length > 0 ? (
+            <li className="border border-line p-3">
+              <SectionLabel className="mb-1">Due sooner than this</SectionLabel>
+              <ul className="space-y-1 text-muted">
+                {ahead.map((t) => (
+                  <li key={t.id}>
+                    <TextButton onClick={() => select({ kind: "task", id: t.id })}>{t.title}</TextButton>
+                  </li>
+                ))}
+              </ul>
+            </li>
+          ) : null}
+        </ul>
+        <div className="flex flex-wrap gap-2">
+          <Button icon={ArrowLeft} onClick={() => select({ kind: "task", id: task.id })}>
+            Back to task
+          </Button>
+          <Button
+            onClick={() => {
+              setView("help");
+              onClose();
+            }}
+          >
+            Help
+          </Button>
+        </div>
+      </div>
+    </>
+  );
+}
+
+function CompletedDetail({ task, onClose }: { task: Task; onClose: () => void }) {
+  const { model, plan, select, setView, setPlanDay, now } = useApp();
+  const course = task.courseId ? model.courseById.get(task.courseId) : undefined;
+  const nextId = plan.order[0];
+  const next = nextId ? model.tasks.find((t) => t.id === nextId) : undefined;
+
+  return (
+    <>
+      <header className="flex items-start gap-3 p-4 border-b border-line">
+        <Check size={22} className="text-ok shrink-0 mt-0.5" strokeWidth={2.5} aria-hidden />
+        <div className="min-w-0 flex-1">
+          <h2 className="font-semibold leading-snug">Marked done</h2>
+          <p className={`mt-1 text-sm ${task.done ? "line-through text-muted" : "text-muted"}`}>{task.title}</p>
+          {course ? (
+            <p className="mt-1 text-xs">
+              <ClassChip code={course.code} color={course.color} />
+            </p>
+          ) : null}
+        </div>
+        <Button iconOnly icon={X} label="Close" onClick={onClose} data-dialog-close="true" />
+      </header>
+      <div className="p-4 space-y-4 overflow-y-auto scrollbar-thin">
+        <p className="text-sm text-muted leading-relaxed">
+          That counts for the prototype goal. Your plan updates everywhere — Plan, Calendar, Upcoming, and Classes stay in sync.
+        </p>
+        {next ? (
+          <div className="border border-line-strong p-3 space-y-2">
+            <SectionLabel>Next up</SectionLabel>
+            <p className="font-medium">{next.title}</p>
+            <Button variant="primary" trailingIcon={ArrowRight} onClick={() => select({ kind: "task", id: next.id })}>
+              Review next task
+            </Button>
+          </div>
+        ) : (
+          <p className="text-sm text-muted">Nothing else is waiting in the plan right now.</p>
+        )}
+        <div className="flex flex-wrap gap-2">
+          <Button
+            onClick={() => {
+              setPlanDay(0);
+              setView("plan");
+              onClose();
+            }}
+          >
+            Back to Plan
+          </Button>
+          <Button
+            onClick={() => {
+              setView("upcoming");
+              onClose();
+            }}
+          >
+            Upcoming
+          </Button>
+          <Button onClick={() => select({ kind: "task", id: task.id })}>Open this task</Button>
+        </div>
+        <p className="text-[11px] text-faint">Finished {format(now, "h:mm a")} · stored only in this browser</p>
       </div>
     </>
   );

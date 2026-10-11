@@ -167,7 +167,7 @@ function NowCard() {
 }
 
 function FocusTask({ lead, item }: { lead: string; item: PlannedWork }) {
-  const { toggleDone, select, now } = useApp();
+  const { completeTask, select, now } = useApp();
   const { task, block } = item;
   const course = useCourse(task);
   const due = task.dueAt ? new Date(task.dueAt) : null;
@@ -190,9 +190,17 @@ function FocusTask({ lead, item }: { lead: string; item: PlannedWork }) {
             </span>
             {due ? <span className={late ? "text-danger font-medium" : ""}>· {dueIn(due, now)}</span> : null}
           </div>
+          <div className="mt-2 flex flex-wrap gap-2">
+            <Button size="sm" onClick={() => select({ kind: "why", id: task.id })}>
+              Why this task?
+            </Button>
+            <Button size="sm" onClick={() => select({ kind: "gap", startMs: block.start.getTime() })}>
+              Free gap details
+            </Button>
+          </div>
         </div>
         {/* The one primary action on the Plan screen. */}
-        <Button variant="primary" size="lg" icon={Check} className="shrink-0" onClick={() => toggleDone(task)}>
+        <Button variant="primary" size="lg" icon={Check} className="shrink-0" onClick={() => completeTask(task)}>
           Done
         </Button>
       </div>
@@ -326,6 +334,7 @@ function EventRow({ item }: { item: Extract<ScheduleItem, { kind: "event" }> }) 
 }
 
 function FreeBlock({ item, capReached }: { item: Extract<ScheduleItem, { kind: "free" }>; capReached: boolean }) {
+  const { select } = useApp();
   const note =
     item.leftover >= 15
       ? item.work.length === 0
@@ -335,7 +344,12 @@ function FreeBlock({ item, capReached }: { item: Extract<ScheduleItem, { kind: "
         : `${duration(item.leftover)} left over${capReached ? " (daily work limit reached)" : ""}`
       : null;
   return (
-    <FreeGapBlock minutes={item.minutes} label={`Free · ${duration(item.minutes)}`} note={note}>
+    <FreeGapBlock
+      minutes={item.minutes}
+      label={`Free · ${duration(item.minutes)}`}
+      note={note}
+      onOpen={() => select({ kind: "gap", startMs: item.start.getTime() })}
+    >
       {item.work.length > 0 ? item.work.map((w) => <WorkRow key={`${w.task.id}:${w.block.part}`} work={w} />) : null}
     </FreeGapBlock>
   );

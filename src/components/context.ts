@@ -7,9 +7,20 @@ import type { PlanIndex } from "@/lib/schedule";
 import type { Change, FeedResult, FeedRole, Snapshot, Task, Workspace } from "@/lib/types";
 import type { Filters } from "@/lib/ui";
 
-export type View = "plan" | "calendar" | "upcoming" | "classes" | "settings";
+export type View = "plan" | "calendar" | "upcoming" | "classes" | "settings" | "help";
 export type CalMode = "month" | "week" | "day";
-export type Selection = { kind: "task" | "event"; id: string } | null;
+/** Settings hub and focused sub-pages (reachable from Settings and Help). */
+export type SettingsPanel = "main" | "calendars" | "schedule" | "estimates" | "browser" | "about";
+export type Selection =
+  | { kind: "task"; id: string }
+  | { kind: "event"; id: string }
+  /** Free-time gap on the plan, identified by a time inside the gap. */
+  | { kind: "gap"; startMs: number }
+  /** Why this task was planned into free time. */
+  | { kind: "why"; id: string }
+  /** Short success state after marking a task done toward the prototype goal. */
+  | { kind: "completed"; id: string }
+  | null;
 
 export interface AppContextValue {
   ws: Workspace;
@@ -34,8 +45,14 @@ export interface AppContextValue {
 
   view: View;
   setView: (v: View) => void;
+  settingsPanel: SettingsPanel;
+  setSettingsPanel: (p: SettingsPanel) => void;
   calMode: CalMode;
   setCalMode: (m: CalMode) => void;
+  /** Reopen the goal-setting instructions (same dialog as after the prototype notice). */
+  openGoal: () => void;
+  /** Mark done and optionally show the completion success panel. */
+  completeTask: (task: Task, opts?: { celebrate?: boolean }) => void;
   calCursor: Date;
   setCalCursor: (d: Date) => void;
   /** Which day of the plan is open, as an offset from today. */

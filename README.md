@@ -163,8 +163,10 @@ What the browser stores decides which state you see (all in localStorage):
 | Key | Meaning |
 | --- | --- |
 | `prio:prototype-notice` | Set when the "early prototype" notice is dismissed. Missing = notice shows on the next page load. |
+| `prio:goal-notice` | Set when the goal-setting pop-up is dismissed. Missing = goal shows right after the prototype notice. |
+| `prio:tour` | Set when the Plan walkthrough is finished or skipped. |
 | `prio:ws` | Calendars and choices. Calendars here + finished setup = returning user. |
-| `prio:ui` | Includes `setupDone`. |
+| `prio:ui` | Includes `setupDone`, current view, and settings sub-panel. |
 
 **Quickest way:** run `npm run dev`. A small **Dev: entry states** box sits in the
 bottom-left corner with one-click shortcuts to each state below. It only exists
@@ -174,12 +176,20 @@ in development (`NODE_ENV=development`) and is not in production builds.
 
 | State | How to reach it | What to check |
 | --- | --- | --- |
-| First visit, prototype notice | New private window → `/` (or `/about`, `/app`, `/app#demo`) | Notice appears once; after **Got it** it doesn't return on refresh. **Prototype** tag in the header reopens it. |
+| First visit, prototype then goal | New private window → `/` (or `/about`, `/app`, `/app#demo`) | Prototype notice first; after **Got it**, the goal pop-up appears with the 45-minute example. Neither returns on refresh once dismissed. **Prototype** and **Goal** tags reopen each. |
 | Home `/` | Private window → `/` | Capability sentence is the biggest thing; **Start planning** is the only accent button. |
 | About `/about` | `/about` (never redirects) | Same, with **Open SmartScheduler** as the primary button. |
-| New user `/app` | Private window → `/app` | Onboarding: capability first; **Add calendar** is primary until a calendar is added, then **Continue**. |
+| New user `/app` | Private window → `/app` | Onboarding: capability first; **Skip** on every step enters a usable Plan (sample data if no calendars yet). |
 | Sample data `/app#demo` | Private window → `/app#demo` | Plan screen with the capability above the "Sample data" note; **Done** is primary. |
-| Returning user `/app` | After the demo (or real calendars), open `/app` again, or `/` (redirects to `/app`) | Plan screen, capability first, **Done** primary. |
+| Returning user `/app` | After the demo (or real calendars), open `/app` again, or `/` (redirects to `/app`) | Plan screen, capability first, **Done** primary; goal/prototype do not auto-interrupt. |
+
+**Goal routes (same outcome: mark productive work done):**
+
+1. **Plan** → open a free gap → choose a task → review / Why this task? → **Done**
+2. **Calendar** (week/day) → open a free gap or planned-work block → review → **Done**
+3. **Upcoming** or **Classes** → open a task → review → **Done**
+
+Help (header) lists these routes. See [`SUBMISSION_NOTES.md`](SUBMISSION_NOTES.md) and [`SCREEN_INVENTORY.md`](SCREEN_INVENTORY.md).
 
 To start over without a private window, run this in the browser console, then
 reload: `Object.keys(localStorage).filter(k => k.startsWith("prio:")).forEach(k => localStorage.removeItem(k))`.
@@ -193,12 +203,30 @@ See [`FIVE_SECOND_TEST.md`](FIVE_SECOND_TEST.md) for the five-second test templa
 with `FEED_ALLOW_PRIVATE_HOSTS=1`, which is only for testing on your own machine.
 Never set it on a public deployment.
 
+## Team contributions
+
+Ownership below is taken from Git history on this repository and the course split
+of the 200-point rubric. Fill in any `[TODO]` lines before submission if names
+need correcting.
+
+| Team member | Git identity (from history) | Responsibilities |
+| --- | --- | --- |
+| **Blake Baird** | `Blake Baird` / `blakebaird2@gmail.com` | Core product: planner, calendar feeds, Plan / Calendar / Upcoming / Classes, sync, design library, walkthrough, SmartScheduler branding, Docker/Vercel-ready structure. |
+| **Grace Farnsworth** | `gracefarns` / `gmfarnz@byu.edu` | Low-fidelity visual design and entry hierarchy contributions (prototype notice / package and related entry work on Grace’s branch). `[TODO: confirm preferred display name]` |
+| **Hannah Galindo** | `Hannah Galindo` / `hannahgalindo013@gmail.com` | Flows, Goal & Submission (60 pts): goal pop-up after prototype notice, skippable onboarding, three goal routes, free-gap / why-this-task / completion panels, Help + Settings sub-pages, `SUBMISSION_NOTES.md`, `SCREEN_INVENTORY.md`, contribution docs, build verification. |
+
+See [`SUBMISSION_NOTES.md`](SUBMISSION_NOTES.md) and [`SCREEN_INVENTORY.md`](SCREEN_INVENTORY.md).
+Do not invent research findings — mark gaps as TODO in those files.
+
 ## Deploy it (free)
 
-**Vercel:** push this repository to GitHub, then at
+**Vercel (primary):** push this repository to GitHub, then at
 [vercel.com/new](https://vercel.com/new) import it and click Deploy. There are no
 environment variables to fill in and no storage to add. The free Hobby plan is
-plenty.
+plenty. After deploy, open the public URL in an **incognito** window on a phone
+and a laptop (no login required).
+
+**Public URL:** `[TODO: paste the verified Vercel URL after deploy — do not invent one]`
 
 **Docker:**
 

@@ -1,10 +1,10 @@
 "use client";
 
-import { CalendarRange, LayoutGrid, ListChecks, Plus, RefreshCw, Settings, Target } from "lucide-react";
+import { CalendarRange, CircleHelp, LayoutGrid, ListChecks, Plus, RefreshCw, Settings, Target } from "lucide-react";
 import { timeAgo } from "@/lib/ui";
 import { useApp, type View } from "./context";
 import { ChangesPopover } from "./ChangesPopover";
-import { PrototypeBadge } from "./Prototype";
+import { GoalBadge, PrototypeBadge } from "./Prototype";
 import { Button, SegmentedControl, Wordmark } from "./ui";
 
 const TABS: { id: View; label: string; icon: typeof ListChecks }[] = [
@@ -17,8 +17,6 @@ const TABS: { id: View; label: string; icon: typeof ListChecks }[] = [
 /**
  * Laid out the way most web apps are, so nothing has to be learned:
  * name on the left (goes home), the main views next to it, and tools on the right.
- * The tools are in two groups with a divider between them: keeping the calendars
- * current, and things you open (add a task, alerts, settings).
  */
 export function Header() {
   const { view, setView, snapshot, now, syncing, sync, openAddTask } = useApp();
@@ -31,9 +29,15 @@ export function Header() {
           <Wordmark />
         </button>
         <PrototypeBadge />
+        <GoalBadge />
 
         <nav className="ml-2 hidden md:block" aria-label="Main">
-          <SegmentedControl label="Main views" options={TABS} value={view} onChange={setView} />
+          <SegmentedControl
+            label="Main views"
+            options={TABS}
+            value={TABS.some((t) => t.id === view) ? view : "plan"}
+            onChange={setView}
+          />
         </nav>
 
         <div className="ml-auto flex items-center gap-1.5">
@@ -60,6 +64,15 @@ export function Header() {
           </Button>
           <ChangesPopover />
           <Button
+            icon={CircleHelp}
+            onClick={() => setView("help")}
+            aria-label="Help and goal"
+            aria-pressed={view === "help"}
+            className={view === "help" ? "!bg-surface-2 underline underline-offset-4" : ""}
+          >
+            <span className="hidden lg:inline">Help</span>
+          </Button>
+          <Button
             icon={Settings}
             onClick={() => setView("settings")}
             aria-label="Settings"
@@ -71,7 +84,13 @@ export function Header() {
         </div>
       </div>
       <nav className="md:hidden px-4 pb-2" aria-label="Main">
-        <SegmentedControl label="Main views" options={TABS} value={view} onChange={setView} stretch />
+        <SegmentedControl
+          label="Main views"
+          options={TABS}
+          value={TABS.some((t) => t.id === view) ? view : "plan"}
+          onChange={setView}
+          stretch
+        />
       </nav>
     </header>
   );

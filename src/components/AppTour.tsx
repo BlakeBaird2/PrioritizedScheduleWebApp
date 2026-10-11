@@ -132,13 +132,14 @@ const STEPS: TourStep[] = [
 
 /**
  * Runs the walkthrough once, the first time someone reaches the app, after they
- * have read the prototype notice and while nothing else is open. After that it
- * only runs when asked for.
+ * have read the prototype notice and the goal pop-up, and while nothing else is
+ * open. After that it only runs when asked for.
  */
 export function AppTour({ blocked }: { blocked: boolean }) {
   const { setView } = useApp();
   const seen = useStored(KEYS.tour);
   const noticeRead = useStored(KEYS.prototypeNotice);
+  const goalRead = useStored(KEYS.goalNotice);
   const [asked, setAsked] = useState(false);
 
   useEffect(() => {
@@ -147,7 +148,7 @@ export function AppTour({ blocked }: { blocked: boolean }) {
     return () => window.removeEventListener(START_EVENT, onStart);
   }, []);
 
-  const firstTime = seen === null && noticeRead !== null;
+  const firstTime = seen === null && noticeRead !== null && goalRead !== null;
   if (blocked || !(asked || firstTime)) return null;
 
   return (

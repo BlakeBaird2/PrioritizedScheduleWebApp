@@ -109,6 +109,9 @@ export function CalendarView() {
             <span className="inline-flex items-center gap-1.5">
               <span className="w-3 h-3 plan-block" style={courseStyle("#64748b")} /> Planned work (dashed: it can move)
             </span>
+            <span className="inline-flex items-center gap-1.5">
+              <span className="w-3 h-3 border border-dashed border-line-strong bg-surface-2" /> Free gap (click to open)
+            </span>
           </>
         ) : (
           <span>Click a day to open it.</span>
@@ -227,8 +230,10 @@ type GridItem =
 
 const MIN = 60_000;
 
+type GapItem = { id: string; start: number; end: number; startMs: number; minutes: number };
+
 function TimeGrid({ days, data }: { days: Date[]; data: CalData }) {
-  const { ws, now, select, setCalCursor, setCalMode, model } = useApp();
+  const { ws, now, select, setCalCursor, setCalMode, model, plan } = useApp();
   const single = days.length === 1;
 
   const columns = useMemo(
@@ -237,6 +242,7 @@ function TimeGrid({ days, data }: { days: Date[]; data: CalData }) {
         const from = startOfDay(day).getTime();
         const to = addDays(startOfDay(day), 1).getTime();
         const items: GridItem[] = [];
+        const gaps: GapItem[] = [];
         const allDay: CalEvent[] = [];
         for (const e of data.events) {
           const s = Date.parse(e.start);
@@ -248,9 +254,19 @@ function TimeGrid({ days, data }: { days: Date[]; data: CalData }) {
         for (const w of data.workByDay.get(dayKey(day)) ?? []) {
           items.push({ kind: "work", id: `${w.task.id}:${w.block.part}`, start: w.block.start.getTime(), end: w.block.end.getTime(), ...w });
         }
-        return { day, from, items, allDay, due: data.dueByDay.get(dayKey(day)) ?? [] };
+        const dayPlan = plan.days.find((d) => dayKey(d.date) === dayKey(day));
+        for (const g of dayPlan?.gaps ?? []) {
+          gaps.push({
+            id: `gap:${g.start.getTime()}`,
+            start: g.start.getTime(),
+            end: g.end.getTime(),
+            startMs: g.start.getTime(),
+            minutes: g.minutes,
+          });
+        }
+        return { day, from, items, gaps, allDay, due: data.dueByDay.get(dayKey(day)) ?? [] };
       }),
-    [days, data],
+    [days, data, plan.days],
   );
 
   // Show the working day, stretched to fit anything outside it.
@@ -357,6 +373,23 @@ function TimeGrid({ days, data }: { days: Date[]; data: CalData }) {
                 {hours.map((h, i) => (
                   <div key={h} className="absolute inset-x-0 border-t border-line/70" style={{ top: i * HOUR_PX }} />
                 ))}
+                {c.gaps.map((g) => {
+                  const y = top(g.start, c.from);
+                  const gh = Math.max(14, top(g.end, c.from) - y - 2);
+                  if (y + gh < 0 || y > hours.length * HOUR_PX) return null;
+                  return (
+                    <button
+                      key={g.id}
+                      type="button"
+                      onClick={() => select({ kind: "gap", startMs: g.startMs })}
+                      className="absolute inset-x-0.5 z-0 border border-dashed border-line-strong bg-surface-2 text-left px-1 py-0.5 overflow-hidden"
+                      style={{ top: y + 1, height: gh }}
+                      title={`Free · ${duration(g.minutes)} — open gap`}
+                    >
+                      {gh > 22 ? <span className="text-[10px] font-bold">Free · {duration(g.minutes)}</span> : null}
+                    </button>
+                  );
+                })}
                 {placed.map(({ item, col, cols }) => {
                   const y = top(item.start, c.from);
                   const h = Math.max(18, top(item.end, c.from) - y - 2);
@@ -373,7 +406,7 @@ function TimeGrid({ days, data }: { days: Date[]; data: CalData }) {
                         key={item.id}
                         type="button"
                         onClick={() => select({ kind: "event", id: e.id })}
-                        className={`event-block absolute flex flex-col justify-start text-left overflow-hidden px-1.5 py-1 ${e.busy ? "" : "opacity-60"}`}
+                        className={`event-block absolute z-[1] flex flex-col justify-start text-left overflow-hidden px-1.5 py-1 ${e.busy ? "" : "opacity-60"}`}
                         style={{ ...style, ...courseStyle(e.color) }}
                         title={`${e.title} · ${clockRange(new Date(e.start), new Date(e.end))}`}
                       >
@@ -388,7 +421,7 @@ function TimeGrid({ days, data }: { days: Date[]; data: CalData }) {
                       key={item.id}
                       type="button"
                       onClick={() => select({ kind: "task", id: item.task.id })}
-                      className={`plan-block absolute flex flex-col justify-start text-left overflow-hidden px-1.5 py-1 ${item.task.done ? "opacity-50" : ""}`}
+                      className={`plan-block absolute z-[1] flex flex-col justify-start text-left overflow-hidden px-1.5 py-1 ${item.task.done ? "opacity-50" : ""}`}
                       style={{ ...style, ...courseStyle(course?.color) }}
                       title={`Work on ${item.task.title} · ${duration(item.block.minutes)}`}
                     >

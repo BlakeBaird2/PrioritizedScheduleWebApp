@@ -13,7 +13,7 @@
 import Link from "next/link";
 import { ArrowRight, Bell, Check, CircleAlert, GraduationCap, Lock, Plus, RefreshCw, SlidersHorizontal, Sparkles, Target } from "lucide-react";
 import { LinkGuide } from "./LinkGuide";
-import { CapabilityHero, PrototypeBadge } from "./Prototype";
+import { CapabilityHero, GoalBadge, PrototypeBadge } from "./Prototype";
 import { DaySketch, LinkSketch, PlanSketch } from "./LandingSketches";
 import { ButtonLink, Wordmark } from "./ui";
 
@@ -80,6 +80,7 @@ function Nav() {
           <Wordmark />
         </a>
         <PrototypeBadge />
+        <GoalBadge />
         <nav aria-label="On this page" className="hidden items-center gap-6 text-base text-muted md:flex">
           <a href="#how-it-works" className="transition-colors hover:text-fg">
             How it works

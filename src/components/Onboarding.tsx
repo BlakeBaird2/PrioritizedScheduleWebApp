@@ -11,7 +11,7 @@ import { FeedAdder, FeedList, ProviderHelp } from "./Feeds";
 import { HoursForm, WeeklyEditor } from "./ScheduleSettings";
 import { ClassTimesEditor } from "./ClassTimes";
 import { KEYS, writeStored } from "./store";
-import { CapabilityHero, PrototypeBadge } from "./Prototype";
+import { CapabilityHero, GoalBadge, PrototypeBadge } from "./Prototype";
 import { Button, Card, Wordmark } from "./ui";
 
 function demoWorkspace(): Workspace {
@@ -49,19 +49,35 @@ export function startDemo() {
 }
 
 export function Onboarding({ onFinish }: { onFinish: () => void }) {
-  const { ws, model } = useApp();
+  const { ws, model, toast } = useApp();
   const [step, setStep] = useState<1 | 2 | 3>(1);
   const hasSchool = ws.feeds.some((f) => f.role === "school");
   const hasClasses = model.visibleCourses.length > 0;
 
+  /** Leave setup and open a usable Plan. Keeps calendars already added; otherwise loads sample data. */
+  const skip = () => {
+    const hadFeeds = ws.feeds.length > 0;
+    if (!hadFeeds) startDemo();
+    onFinish();
+    toast(
+      hadFeeds
+        ? "Setup skipped — your calendars are ready on Plan."
+        : "Setup skipped — sample data loaded so you can try the goal.",
+    );
+  };
+
   return (
     <div className="min-h-dvh px-4 py-10 sm:py-16">
       <div className="max-w-xl mx-auto">
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 flex-wrap">
           <Link href="/" className="inline-block" aria-label="SmartScheduler home page">
             <Wordmark size="lg" />
           </Link>
           <PrototypeBadge />
+          <GoalBadge />
+          <Button className="ml-auto" onClick={skip}>
+            Skip setup
+          </Button>
         </div>
         <CapabilityHero className="mt-6">
           <p className="mt-3 text-lg text-muted leading-relaxed">
@@ -94,11 +110,12 @@ export function Onboarding({ onFinish }: { onFinish: () => void }) {
                 variant={ws.feeds.length === 0 ? "secondary" : "primary"}
                 trailingIcon={ArrowRight}
                 disabled={ws.feeds.length === 0}
-                title={ws.feeds.length === 0 ? "Add a calendar first" : undefined}
+                title={ws.feeds.length === 0 ? "Add a calendar first, or Skip" : undefined}
                 onClick={() => setStep(hasClasses ? 2 : 3)}
               >
                 Continue
               </Button>
+              <Button onClick={skip}>Skip</Button>
               {ws.feeds.length > 0 && !hasSchool ? (
                 <span className="text-xs text-muted">No school calendar yet. You can still add work by hand.</span>
               ) : null}
@@ -119,10 +136,11 @@ export function Onboarding({ onFinish }: { onFinish: () => void }) {
               </p>
             </div>
             <ClassTimesEditor />
-            <div className="flex items-center gap-2 pt-1">
+            <div className="flex items-center gap-2 flex-wrap pt-1">
               <Button icon={ArrowLeft} onClick={() => setStep(1)}>
                 Back
               </Button>
+              <Button onClick={skip}>Skip</Button>
               <Button variant="primary" trailingIcon={ArrowRight} className="ml-auto" onClick={() => setStep(3)}>
                 Continue
               </Button>
@@ -142,10 +160,11 @@ export function Onboarding({ onFinish }: { onFinish: () => void }) {
               <p className="mt-0.5 mb-3 text-xs text-muted leading-relaxed">A job, practice, or commute that isn&apos;t on a calendar you added. You can skip this.</p>
               <WeeklyEditor />
             </div>
-            <div className="flex items-center gap-2 pt-1">
+            <div className="flex items-center gap-2 flex-wrap pt-1">
               <Button icon={ArrowLeft} onClick={() => setStep(hasClasses ? 2 : 1)}>
                 Back
               </Button>
+              <Button onClick={skip}>Skip</Button>
               <Button variant="primary" trailingIcon={ArrowRight} className="ml-auto" onClick={onFinish}>
                 Build my plan
               </Button>
@@ -157,7 +176,7 @@ export function Onboarding({ onFinish }: { onFinish: () => void }) {
           <Lock size={14} className="shrink-0 mt-0.5" />
           <span>
             No account needed. Your calendar links and everything you set here stay in this browser. The server reads a calendar only to hand it back to you,
-            and keeps nothing.
+            and keeps nothing. Setup is optional — Skip opens the app with sample data if you have not added calendars yet.
           </span>
         </p>
       </div>

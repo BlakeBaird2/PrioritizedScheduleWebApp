@@ -1,6 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
-import { DevStateSwitcher, PrototypeNotice } from "@/components/Prototype";
+import { DevStateSwitcher, EntryNotices } from "@/components/Prototype";
 
 export const metadata: Metadata = {
   title: "SmartScheduler — Prioritized Schedule",
@@ -35,8 +35,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       </head>
       <body>
         {children}
-        {/* Shown on the first visit to any page, and again from the Prototype tag. */}
-        <PrototypeNotice />
+        {/* Prototype notice first, then the goal pop-up; each can be reopened from badges / Help. */}
+        <EntryNotices />
         <DevStateSwitcher />
       </body>
     </html>

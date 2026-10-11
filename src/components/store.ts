@@ -20,6 +20,8 @@ export const KEYS = {
   theme: "prio:theme",
   /** When the "early prototype" notice was dismissed. Kept apart from calendars and settings. */
   prototypeNotice: "prio:prototype-notice",
+  /** When the goal-setting instructions were dismissed. Kept apart from calendars and settings. */
+  goalNotice: "prio:goal-notice",
   /** When the quick tour of the Plan screen was finished or skipped. */
   tour: "prio:tour",
 } as const;
@@ -107,8 +109,11 @@ export function useTheme(): { theme: "light" | "dark"; toggle: () => void } {
 
 /**
  * Forget everything this app stored in the browser, except the theme and whether
- * the prototype notice and the tour were already seen (starting over is not a first visit).
+ * the prototype/goal notices and the tour were already seen (starting over is not a first visit).
  */
 export function resetEverything() {
-  for (const key of Object.values(KEYS)) if (key !== KEYS.theme && key !== KEYS.prototypeNotice && key !== KEYS.tour) writeStored(key, null);
+  for (const key of Object.values(KEYS)) {
+    if (key === KEYS.theme || key === KEYS.prototypeNotice || key === KEYS.goalNotice || key === KEYS.tour) continue;
+    writeStored(key, null);
+  }
 }
